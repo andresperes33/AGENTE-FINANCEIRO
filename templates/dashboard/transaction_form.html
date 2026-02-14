@@ -115,14 +115,15 @@
                             class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none placeholder:text-slate-600"
                             list="category-list" placeholder="Selecione ou digite..." required>
                         <datalist id="category-list">
+                            {% for cat in user_categories %}
+                            <option value="{{ cat }}">
+                                {% empty %}
                             <option value="Alimentação">
                             <option value="Transporte">
                             <option value="Moradia">
                             <option value="Salário">
                             <option value="Lazer">
-                            <option value="Saúde">
-                            <option value="Educação">
-                            <option value="Investimentos">
+                                {% endfor %}
                         </datalist>
                     </div>
                 </div>

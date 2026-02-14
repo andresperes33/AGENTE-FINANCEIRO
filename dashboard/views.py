@@ -103,8 +103,9 @@ def transactions_list(request):
     if date_to:
         transactions = transactions.filter(transaction_date__lte=date_to)
     
-    # Categorias únicas para filtro
-    categories = Transaction.objects.filter(user=user).values_list('category', flat=True).distinct()
+    # Categorias únicas para filtro (Normalizadas para evitar duplicatas por espaços)
+    categories_raw = Transaction.objects.filter(user=user).values_list('category', flat=True).distinct()
+    categories = sorted(list(set(c.strip() for c in categories_raw if c)))
     
     context = {
         'transactions': transactions,
@@ -142,8 +143,13 @@ def transaction_create(request):
         except Exception as e:
             messages.error(request, f'Erro ao criar transação: {e}')
     
+    # Buscar categorias existentes do usuário para sugestão
+    user_categories = Transaction.objects.filter(user=request.user).values_list('category', flat=True).distinct()
+    categories = sorted(list(set(c.strip() for c in user_categories if c)))
+
     context = {
         'today_iso': timezone.now().date().isoformat(),
+        'user_categories': categories,
     }
     return render(request, 'dashboard/transaction_form.html', context)
 
