@@ -38,6 +38,10 @@ class EvolutionService:
             return False
 
         clean_number = ''.join(filter(str.isdigit, number))
+        # Se for número do Brasil sem o 55 (10 ou 11 dígitos), adiciona o 55
+        if len(clean_number) in [10, 11] and not clean_number.startswith('55'):
+            clean_number = '55' + clean_number
+        
         url = f"{self.base_url}/message/sendText/{self.instance}"
         headers = {
             "apikey": self.api_key,
