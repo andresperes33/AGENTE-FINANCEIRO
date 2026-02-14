@@ -148,7 +148,7 @@ def evolution_webhook(request):
 
 
 def validate_kirvano_signature(signature, body):
-    secret = settings.KIRVANO_WEBHOOK_SECRET
+    secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
     if not secret or not signature: return True
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
