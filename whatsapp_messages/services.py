@@ -12,32 +12,39 @@ class EvolutionService:
 
     def send_message(self, number, text):
         """
-        Envia uma mensagem de texto via Evolution API
+        Envia mensagens fracionadas para parecer humano
         """
+        import time
         if not all([self.base_url, self.api_key, self.instance]):
             logger.error("Configuração da Evolution API incompleta.")
             return False
 
-        # Formatar número (garantir que termina com @s.whatsapp.net se necessário)
-        # O Evolution aceita o número limpo ou formatado.
-        # Vamos garantir o formato esperado pela API.
         clean_number = ''.join(filter(str.isdigit, number))
-        
         url = f"{self.base_url}/message/sendText/{self.instance}"
         headers = {
             "apikey": self.api_key,
             "Content-Type": "application/json"
         }
-        
-        payload = {
-            "number": clean_number,
-            "text": text
-        }
 
-        try:
-            response = requests.post(url, json=payload, headers=headers)
-            response.raise_for_status()
-            return True
-        except Exception as e:
-            logger.error(f"Erro ao enviar mensagem via Evolution: {str(e)}")
-            return False
+        # Divide o texto em blocos baseados em parágrafos (linha dupla)
+        # Se não houver linha dupla, tenta por linha simples, mas filtra vazios
+        parts = [p.strip() for p in text.split('\n\n') if p.strip()]
+        if len(parts) <= 1:
+            parts = [p.strip() for p in text.split('\n') if p.strip()]
+
+        success = True
+        for part in parts:
+            payload = {
+                "number": clean_number,
+                "text": part
+            }
+            try:
+                response = requests.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                # Pequena pausa entre mensagens para simular digitação
+                time.sleep(1.5)
+            except Exception as e:
+                logger.error(f"Erro ao enviar parte da mensagem: {str(e)}")
+                success = False
+        
+        return success
