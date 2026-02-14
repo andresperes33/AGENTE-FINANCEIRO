@@ -101,7 +101,19 @@ def evolution_webhook(request):
         body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', 'Olá')
 
         if not subscription or subscription.status != 'active':
-            response_text = agent.process_inactive_user(body)
+            response_text = agent.process_inactive_user(body, user)
+            
+            # SALVAR NO BANCO PARA TER MEMÓRIA
+            from whatsapp_messages.models import Message
+            Message.objects.create(
+                user=user,
+                phone_number=from_number,
+                message_type='text',
+                raw_content=body,
+                response_sent=response_text,
+                status='completed'
+            )
+            
             evo.send_message(from_number, response_text)
             return JsonResponse({'status': 'inactive_humanized'}, status=200)
         

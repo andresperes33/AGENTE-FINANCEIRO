@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from transactions.models import Transaction
 from agenda.models import Appointment
+from whatsapp_messages.models import Message
 import json
 import os
 import re
@@ -51,18 +52,25 @@ class AIAgentService:
         else:
             return "Desculpe, não entendi. Tente algo como 'Gastei 50 no almoço' ou mande um áudio/foto!"
 
-    def process_inactive_user(self, text):
-        """Gera uma resposta humanizada para usuários sem assinatura ativa"""
+    def process_inactive_user(self, text, user):
+        """Gera uma resposta humanizada e com memória para usuários sem assinatura ativa"""
         if not self.llm:
-            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/"
+            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
         
         try:
+            # Buscar histórico das últimas 5 mensagens
+            history_msgs = Message.objects.filter(user=user).order_by('-created_at')[:5]
+            history_text = ""
+            for msg in reversed(history_msgs):
+                history_text += f"Usuário: {msg.raw_content}\nAgente: {msg.response_sent}\n"
+
             prompt = PromptTemplate.from_template(INACTIVE_PROMPT)
             chain = prompt | self.llm
-            response = chain.invoke({"text": text})
+            response = chain.invoke({"text": text, "history": history_text or "Início da conversa."})
             return response.content
-        except:
-            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/"
+        except Exception as e:
+            print(f"Erro Memória: {e}")
+            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
 
     def process_image(self, image_url, user):
         """Analisa imagem de comprovante usando Vision do GPT-4o-mini"""
