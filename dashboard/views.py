@@ -14,12 +14,8 @@ from .utils import generate_transactions_excel, generate_transactions_pdf
 @login_required
 def home(request):
     """Dashboard home com resumo financeiro"""
-    # Forcing reload
     user = request.user
-    
-    # Data atual
     today = timezone.now().date()
-    # first_day_month = today.replace(day=1) # Otimização: Usar filtro simples
     
     # Transações do mês atual
     transactions_month = Transaction.objects.filter(
@@ -28,27 +24,55 @@ def home(request):
         transaction_date__year=today.year
     )
     
-    # Cálculos
-    income_month = transactions_month.filter(type='income').aggregate(
-        total=Sum('amount')
-    )['total'] or 0
+    # Cálculos do Mês
+    income_month = transactions_month.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0
+    expense_month = transactions_month.filter(type='expense').aggregate(total=Sum('amount'))['total'] or 0
     
-    expense_month = transactions_month.filter(type='expense').aggregate(
-        total=Sum('amount')
-    )['total'] or 0
+    # Saldo Real (Total de todas as transações)
+    all_transactions = Transaction.objects.filter(user=user)
+    total_income = all_transactions.filter(type='income').aggregate(total=Sum('amount'))['total'] or 0
+    total_expense = all_transactions.filter(type='expense').aggregate(total=Sum('amount'))['total'] or 0
+    total_balance = total_income - total_expense
     
-    balance = income_month - expense_month
+    # Gráfico de Rosca: Gastos por Categoria (Mês Atual)
+    category_expenses = transactions_month.filter(type='expense').values('category').annotate(total=Sum('amount')).order_by('-total')
+    chart_categories = [c['category'] for c in category_expenses]
+    chart_category_values = [float(c['total']) for c in category_expenses]
+
+    # Gráfico de Linha: Evolução nos últimos 30 dias
+    start_date = today - timedelta(days=30)
+    initial_balance = all_transactions.filter(transaction_date__lt=start_date).aggregate(
+        inc=Sum('amount', filter=Q(type='income')),
+        exp=Sum('amount', filter=Q(type='expense'))
+    )
+    current_runner = (initial_balance['inc'] or 0) - (initial_balance['exp'] or 0)
     
-    # Últimas transações (limite 5 para dashboard)
-    recent_transactions = Transaction.objects.filter(user=user).order_by('-transaction_date', '-created_at')[:5]
+    daily_stats = all_transactions.filter(transaction_date__gte=start_date).values('transaction_date').annotate(
+        day_inc=Sum('amount', filter=Q(type='income')),
+        day_exp=Sum('amount', filter=Q(type='expense'))
+    ).order_by('transaction_date')
+    
+    chart_days = []
+    chart_balances = []
+    for day in daily_stats:
+        day_net = (day['day_inc'] or 0) - (day['day_exp'] or 0)
+        current_runner += day_net
+        chart_days.append(day['transaction_date'].strftime('%d/%m'))
+        chart_balances.append(float(current_runner))
+
+    # Últimas transações
+    recent_transactions = all_transactions.order_by('-transaction_date', '-created_at')[:5]
     
     context = {
         'income_month': income_month,
         'expense_month': expense_month,
-        'balance': balance,
+        'balance': total_balance,
         'recent_transactions': recent_transactions,
+        'chart_categories': chart_categories,
+        'chart_category_values': chart_category_values,
+        'chart_days': chart_days,
+        'chart_balances': chart_balances,
         'now': timezone.now(),
-        # 'today_iso': today.isoformat(), # Não usado no template
     }
     
     return render(request, 'dashboard/home.html', context)

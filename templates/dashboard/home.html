@@ -93,6 +93,43 @@
         </div>
     </div>
 
+    <!-- Gráficos de Impacto -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm">
+            <h3 class="font-display text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Evolução do Saldo (30 dias)
+            </h3>
+            <div class="h-[300px]">
+                <canvas id="balanceChart"></canvas>
+            </div>
+        </div>
+        <div class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm">
+            <h3 class="font-display text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="text-rose-400">
+                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                    <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                </svg>
+                Gastos por Categoria (Mês)
+            </h3>
+            <div class="h-[300px] flex justify-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados Seguros para o JS -->
+    {{ chart_days|json_script:"days-data" }}
+    {{ chart_balances|json_script:"balances-data" }}
+    {{ chart_categories|json_script:"categories-data" }}
+    {{ chart_category_values|json_script:"values-data" }}
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div
             class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm lg:col-span-2 shadow-sm border-dark-border/50">
@@ -239,11 +276,71 @@
     </div>
 </div>
 {% endwith %}
+{% block extra_js %}
 <script>
+    // 1. Função de preenchimento de campos (Executa primeiro para garantir os valores)
+    document.querySelectorAll('.js-fill').forEach(el => { el.textContent = el.getAttribute('data-val'); });
+
+    try {
+        // 2. Coleta de dados via json_script (Segurança total contra aspas e quebras)
+        const chartDays = JSON.parse(document.getElementById('days-data').textContent);
+        const chartBalances = JSON.parse(document.getElementById('balances-data').textContent);
+        const chartCats = JSON.parse(document.getElementById('categories-data').textContent);
+        const chartVals = JSON.parse(document.getElementById('values-data').textContent);
+
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter, sans-serif';
+
+        // Gráfico de Linha
+        new Chart(document.getElementById('balanceChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: chartDays,
+                datasets: [{
+                    label: 'Saldo',
+                    data: chartBalances,
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: 'rgba(51, 65, 85, 0.5)' } }, x: { grid: { display: false } } }
+            }
+        });
+
+        // Gráfico de Categoria
+        new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: chartCats,
+                datasets: [{
+                    data: chartVals,
+                    backgroundColor: ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } }
+            }
+        });
+    } catch (e) {
+        console.error("Erro ao carregar gráficos:", e);
+    }
+
     document.getElementById('exportForm').onsubmit = function (e) {
         const exportType = e.submitter.value;
         this.action = exportType === 'excel' ? "{% url 'dashboard:export_excel' %}" : "{% url 'dashboard:export_pdf' %}";
     };
-    document.querySelectorAll('.js-fill').forEach(el => { el.textContent = el.getAttribute('data-val'); });
 </script>
+{% endblock %}
 {% endblock %}
