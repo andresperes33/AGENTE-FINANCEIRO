@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import random
 import string
+import os
 
 from .models import WebhookEvent
 from subscriptions.models import Subscription
@@ -148,7 +149,16 @@ def evolution_webhook(request):
 
 
 def validate_kirvano_signature(signature, body):
+    # Aceita ou SECRET ou TOKEN das envs
     secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
-    if not secret or not signature: return True
+    
+    # Se não houver segredo configurado, deixa passar para teste (Cuidado em produção!)
+    if not secret:
+        print("AVISO: Kirvano Webhook Secret não configurado no EasyPanel!")
+        return True
+        
+    if not signature:
+        return False
+        
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
