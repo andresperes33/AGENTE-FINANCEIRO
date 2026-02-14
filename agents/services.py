@@ -52,6 +52,16 @@ class AIAgentService:
         else:
             return "Desculpe, não entendi. Tente algo como 'Gastei 50 no almoço' ou mande um áudio/foto!"
 
+    def gen_notification_text(self, prompt_text):
+        """Gera apenas o texto da notificação sem processar intenções"""
+        if not self.llm:
+            return prompt_text
+        try:
+            response = self.llm.invoke(prompt_text)
+            return response.content
+        except:
+            return prompt_text
+
     def process_inactive_user(self, text, user):
         """Gera uma resposta humanizada e com memória para usuários sem assinatura ativa"""
         if not self.llm:
