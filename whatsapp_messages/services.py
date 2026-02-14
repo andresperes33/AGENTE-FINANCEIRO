@@ -60,10 +60,13 @@ class EvolutionService:
                 "text": part
             }
             try:
+                print(f"Enviando parte via Evolution para {clean_number}...")
                 response = requests.post(url, json=payload, headers=headers)
                 response.raise_for_status()
+                print(f"Parte enviada com sucesso!")
                 time.sleep(1.5)
             except Exception as e:
+                print(f"ERRO EVOLUTION: {str(e)}")
                 logger.error(f"Erro ao enviar parte da mensagem: {str(e)}")
                 success = False
         

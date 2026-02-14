@@ -68,7 +68,6 @@ def process_kirvano_event(payload, event_type):
     # Aceita tanto o evento real quando o de teste da Kirvano
     if event_type in ['purchase.approved', 'RECURRING']:
         customer_data = payload.get('customer', {})
-        # No RECURRING o id vem direto no payload às vezes
         subscription_data = payload.get('subscription', {}) or payload.get('purchase', {}) or payload
         
         email = customer_data.get('email')
@@ -76,7 +75,6 @@ def process_kirvano_event(payload, event_type):
         name = customer_data.get('name') or 'Cliente'
         
         if not email: 
-            # Se for teste e não tiver email, vamos usar um fake para o Zap disparar
             email = f"teste_{random.randint(100,999)}@teste.com"
             
         user = User.objects.filter(email=email).first()
@@ -104,6 +102,7 @@ def process_kirvano_event(payload, event_type):
         )
         
         if phone:
+            print(f"Tentando enviar Zap de boas-vindas para: {phone}")
             evo = EvolutionService()
             msg = f"🚀 *Pagamento Confirmado!* \n\n"
             msg += f"Olá {user.nome}, seja muito bem-vindo(a) ao Agente Financeiro! \n\n"
@@ -119,8 +118,6 @@ def process_kirvano_event(payload, event_type):
                 msg += "Como posso te ajudar a organizar seu consultório hoje?"
                 
             evo.send_message(phone, msg)
-    elif event_type in ['subscription.canceled', 'subscription.payment_failed']:
-        Subscription.objects.filter(kirvano_subscription_id=payload.get('subscription', {}).get('id')).update(status='canceled')
 
 
 @csrf_exempt
@@ -146,13 +143,11 @@ def evolution_webhook(request):
         from agents.services import AIAgentService
         agent = AIAgentService()
         
-        # Obter o corpo do texto para a I.A. responder mesmo se for inativo
         body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', 'Olá')
 
         if not subscription or subscription.status != 'active':
             response_text = agent.process_inactive_user(body, user)
             
-            # SALVAR NO BANCO PARA TER MEMÓRIA
             from whatsapp_messages.models import Message
             Message.objects.create(
                 user=user,
@@ -166,20 +161,14 @@ def evolution_webhook(request):
             evo.send_message(from_number, response_text)
             return JsonResponse({'status': 'inactive_humanized'}, status=200)
         
-        # LÓGICA DE DETECÇÃO DE TIPO DE MENSAGEM
         response_text = ""
         
-        # 1. IMAGEM
         if 'imageMessage' in message_data:
             file_url = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{data.get('key', {}).get('id')}"
             response_text = agent.process_image(file_url, user)
-            
-        # 2. ÁUDIO
         elif 'audioMessage' in message_data:
             file_url = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{data.get('key', {}).get('id')}"
             response_text = agent.process_audio(file_url, user)
-            
-        # 3. TEXTO
         else:
             body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', '')
             if body:
@@ -197,16 +186,11 @@ def evolution_webhook(request):
 
 
 def validate_kirvano_signature(signature, body):
-    # Aceita ou SECRET ou TOKEN das envs
     secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
-    
-    # Se não houver segredo configurado, deixa passar para teste (Cuidado em produção!)
     if not secret:
         print("AVISO: Kirvano Webhook Secret não configurado no EasyPanel!")
         return True
-        
     if not signature:
         return False
-        
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
