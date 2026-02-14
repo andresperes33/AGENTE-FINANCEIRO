@@ -23,7 +23,8 @@ def check_appointment_notifications():
     
     for appt in upcoming_1h:
         # Pede para a IA gerar um lembrete amigável
-        ai_prompt = f"Você é o Agente Financeiro. Escreva um lembrete amigável, humano e curto para o WhatsApp avisando que o usuário tem um compromisso chamado '{appt.title}' em 1 hora (às {appt.date_time.strftime('%H:%M')}). Use alguns emojis. Não adicione nada além do lembrete."
+        local_time = timezone.localtime(appt.date_time).strftime('%H:%M')
+        ai_prompt = f"Você é o Agente Financeiro. Escreva um lembrete amigável, humano e curto para o WhatsApp avisando que o usuário tem um compromisso chamado '{appt.title}' em 1 hora (às {local_time}). Use alguns emojis. Não adicione nada além do lembrete."
         msg = ai_agent.gen_notification_text(ai_prompt)
         
         if whatsapp.send_message(appt.user.telefone, msg):
@@ -38,7 +39,8 @@ def check_appointment_notifications():
     )
     
     for appt in upcoming_5min:
-        ai_prompt = f"Você é o Agente Financeiro. Escreva um lembrete URGENTE, humano e muito rápido para o WhatsApp avisando que o compromisso '{appt.title}' começa em APENAS 5 MINUTOS (às {appt.date_time.strftime('%H:%M')}). Use emojis de pressa. Seja direto."
+        local_time = timezone.localtime(appt.date_time).strftime('%H:%M')
+        ai_prompt = f"Você é o Agente Financeiro. Escreva um lembrete URGENTE, humano e muito rápido para o WhatsApp avisando que o compromisso '{appt.title}' começa em APENAS 5 MINUTOS (às {local_time}). Use emojis de pressa. Seja direto."
         msg = ai_agent.gen_notification_text(ai_prompt)
         
         if whatsapp.send_message(appt.user.telefone, msg):
