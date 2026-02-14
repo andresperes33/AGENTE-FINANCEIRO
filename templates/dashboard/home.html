@@ -3,8 +3,8 @@
 {% block title %}Visão Geral{% endblock %}
 {% block header_title %}Visão Geral{% endblock %}
 {% block content %}
+{% with im=income_month|floatformat:2 em=expense_month|floatformat:2 bl=balance|floatformat:2 mo=now|date:"F" %}
 <div class="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-    <!-- Resumo de Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Saldo -->
         <div
@@ -15,8 +15,7 @@
             <div class="relative flex justify-between items-start">
                 <div class="space-y-1">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Saldo Total</p>
-                    <h2 class="text-3xl font-display font-bold text-white tracking-tight">R$ {{ balance|floatformat:2 }}
-                    </h2>
+                    <h2 class="text-3xl font-display font-bold text-white tracking-tight">R$ {{ bl }}</h2>
                 </div>
                 <div
                     class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
@@ -43,8 +42,7 @@
             <div class="relative flex justify-between items-start">
                 <div class="space-y-1">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Receitas (Mês)</p>
-                    <h2 class="text-3xl font-display font-bold text-emerald-400 tracking-tight">R$
-                        {{income_month|floatformat:2 }}</h2>
+                    <h2 class="text-3xl font-display font-bold text-emerald-400 tracking-tight">R$ {{ im }}</h2>
                 </div>
                 <div
                     class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 shadow-inner">
@@ -57,9 +55,9 @@
             </div>
             <div class="mt-6 flex items-center gap-2">
                 <span
-                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase">{{now|date:"F"
-                    }}</span>
-                <p class="text-xs text-slate-500 font-medium leading-none">Total depositado no mês</p>
+                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase">{{
+                    mo }}</span>
+                <p class="text-xs text-slate-500 font-medium leading-none">Total depositado</p>
             </div>
         </div>
 
@@ -72,8 +70,7 @@
             <div class="relative flex justify-between items-start">
                 <div class="space-y-1">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Despesas (Mês)</p>
-                    <h2 class="text-3xl font-display font-bold text-rose-400 tracking-tight">R$
-                        {{expense_month|floatformat:2 }}</h2>
+                    <h2 class="text-3xl font-display font-bold text-rose-400 tracking-tight">R$ {{ em }}</h2>
                 </div>
                 <div
                     class="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-400 shadow-inner">
@@ -86,15 +83,14 @@
             </div>
             <div class="mt-6 flex items-center gap-2">
                 <span
-                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 uppercase">{{now|date:"F"
-                    }}</span>
-                <p class="text-xs text-slate-500 font-medium leading-none">Total gasto no mês</p>
+                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 uppercase">{{
+                    mo }}</span>
+                <p class="text-xs text-slate-500 font-medium leading-none">Total gasto</p>
             </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Tabela Recentes -->
         <div
             class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm lg:col-span-2 shadow-sm border-dark-border/50">
             <div class="flex justify-between items-center mb-8">
@@ -110,30 +106,30 @@
 
             {% if recent_transactions %}
             <div class="space-y-4">
-                {% for transaction in recent_transactions %}
+                {% for t in recent_transactions %}
+                {% with amt=t.amount|floatformat:2 dt=t.transaction_date|date:"d M Y" cat_init=t.category|first|upper %}
                 <div
                     class="group flex items-center justify-between p-4 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-dark-border transition-all duration-300">
                     <div class="flex items-center gap-4">
                         <div
-                            class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm transition-transform group-hover:scale-110 {% if transaction.type == 'income' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% else %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% endif %}">
-                            {{ transaction.category|first|upper }}
+                            class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm transition-transform group-hover:scale-110 {% if t.type == 'income' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% else %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% endif %}">
+                            {{ cat_init }}
                         </div>
                         <div>
                             <p
                                 class="font-bold text-slate-200 text-sm group-hover:text-white transition-colors leading-tight">
-                                {{ transaction.description }}</p>
-                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                                {{transaction.transaction_date|date:"d M Y" }}</p>
+                                {{ t.description }}</p>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{{ dt }}</p>
                         </div>
                     </div>
                     <div class="text-right">
                         <p
-                            class="font-display font-bold text-base {% if transaction.type == 'income' %}text-emerald-400{% else %}text-rose-400{% endif %}">
-                            {% if transaction.type == 'income' %}+{% else %}-{% endif %} R$
-                            {{transaction.amount|floatformat:2 }}
+                            class="font-display font-bold text-base {% if t.type == 'income' %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                            {% if t.type == 'income' %}+{% else %}-{% endif %} R$ {{ amt }}
                         </p>
                     </div>
                 </div>
+                {% endwith %}
                 {% endfor %}
             </div>
             {% else %}
@@ -148,9 +144,7 @@
             {% endif %}
         </div>
 
-        <!-- Sidebar Dashboard -->
         <div class="space-y-6">
-            <!-- Card CTA -->
             <div
                 class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-8 text-white shadow-2xl shadow-primary/20 relative overflow-hidden group">
                 <div
@@ -177,7 +171,7 @@
                 </div>
             </div>
 
-            <!-- Exportação Profissional -->
+            <!-- Exportação -->
             <div class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm">
                 <div class="flex items-center gap-3 mb-6">
                     <div
@@ -186,79 +180,79 @@
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
                     </div>
                     <h3 class="font-display font-bold text-white text-lg">Exportação</h3>
                 </div>
 
-                <p class="text-xs text-slate-400 mb-6 leading-relaxed">Gere documentos profissionais para seu contador
-                    ou controle pessoal.</p>
-
-                <div class="space-y-3">
-                    <a href="{% url 'dashboard:export_pdf' %}"
-                        class="flex items-center justify-between w-full p-4 rounded-xl bg-dark hover:bg-slate-800 border border-dark-border transition-all group">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                            </div>
-                            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Relatório PDF</span>
+                <form id="exportForm" action="{% url 'dashboard:export_pdf' %}" method="get" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">Início</label>
+                            <input type="date" name="date_from"
+                                class="w-full bg-dark border border-dark-border rounded-lg p-2 text-[10px] text-white focus:outline-none focus:border-primary">
                         </div>
-                        <svg class="text-slate-600 group-hover:text-white transition-colors" width="16" height="16"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M7 17l9.2-9.2M17 17V7H7"></path>
-                        </svg>
-                    </a>
-
-                    <a href="{% url 'dashboard:export_excel' %}"
-                        class="flex items-center justify-between w-full p-4 rounded-xl bg-dark hover:bg-slate-800 border border-dark-border transition-all group">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                                    <line x1="9" y1="21" x2="9" y2="9"></line>
-                                </svg>
-                            </div>
-                            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Planilha
-                                Excel</span>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">Fim</label>
+                            <input type="date" name="date_to"
+                                class="w-full bg-dark border border-dark-border rounded-lg p-2 text-[10px] text-white focus:outline-none focus:border-primary">
                         </div>
-                        <svg class="text-slate-600 group-hover:text-white transition-colors" width="16" height="16"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M7 17l9.2-9.2M17 17V7H7"></path>
-                        </svg>
-                    </a>
-                </div>
+                    </div>
+
+                    <div class="pt-2 space-y-3">
+                        <button type="submit" name="export_type" value="pdf"
+                            class="flex items-center justify-between w-full p-4 rounded-xl bg-dark hover:bg-slate-800 border border-dark-border transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">PDF
+                                    Filtrado</span>
+                            </div>
+                        </button>
+
+                        <button type="submit" name="export_type" value="excel"
+                            class="flex items-center justify-between w-full p-4 rounded-xl bg-dark hover:bg-slate-800 border border-dark-border transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Excel
+                                    Filtrado</span>
+                            </div>
+                        </button>
+                    </div>
+                </form>
             </div>
 
-            <!-- Ajuda/Status -->
             <div class="bg-dark-lighter border border-dark-border rounded-xl p-6">
-                <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Status do Sistema</h4>
+                <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Status</h4>
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-medium text-slate-400">Motor de I.A.</span>
-                        <span
-                            class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 uppercase">Ativo</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-slate-400">Sincronização</span>
-                        <span
-                            class="flex items-center gap-1.5 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20 uppercase tracking-tighter">Ok</span>
+                        <span class="text-[10px] font-bold text-emerald-400 uppercase">Ativo</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endwith %}
+<script>
+    document.getElementById('exportForm').onsubmit = function (e) {
+        const exportType = e.submitter.value;
+        this.action = exportType === 'excel' ? "{% url 'dashboard:export_excel' %}" : "{% url 'dashboard:export_pdf' %}";
+    };
+</script>
 {% endblock %}

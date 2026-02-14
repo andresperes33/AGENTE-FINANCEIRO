@@ -308,18 +308,36 @@ def export_excel(request):
 
 @login_required
 def export_pdf(request):
-    """Exporta relatório PDF com gráficos"""
+    """Exporta relatório PDF com gráficos e filtros"""
     user = request.user
     
-    # Período (últimos 30 dias por padrão ou conforme filtro)
+    # Filtros
+    type_filter = request.GET.get('type')
+    category_filter = request.GET.get('category')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
     period = request.GET.get('period', '30')
-    days = int(period)
-    start_date = timezone.now().date() - timedelta(days=days)
     
-    transactions = Transaction.objects.filter(
-        user=user,
-        transaction_date__gte=start_date
-    ).order_by('-transaction_date')
+    transactions = Transaction.objects.filter(user=user)
+    
+    if type_filter:
+        transactions = transactions.filter(type=type_filter)
+    if category_filter:
+        transactions = transactions.filter(category=category_filter)
+        
+    if date_from and date_to:
+        transactions = transactions.filter(transaction_date__range=[date_from, date_to])
+    elif date_from:
+        transactions = transactions.filter(transaction_date__gte=date_from)
+    elif date_to:
+        transactions = transactions.filter(transaction_date__lte=date_to)
+    else:
+        # Se não houver data, usa o período padrão de dias
+        days = int(period)
+        start_date = timezone.now().date() - timedelta(days=days)
+        transactions = transactions.filter(transaction_date__gte=start_date)
+    
+    transactions = transactions.order_by('-transaction_date')
     
     # Dados para o resumo e gráficos
     income_total = transactions.filter(type='income').aggregate(Sum('amount'))['amount__sum'] or 0
@@ -335,6 +353,7 @@ def export_pdf(request):
         'balance': float(income_total - expense_total),
         'expense_labels': [item['category'] for item in expenses_by_category],
         'expense_data': [float(item['total']) for item in expenses_by_category],
+        'date_range': f"{date_from or 'Início'} até {date_to or 'Hoje'}" if (date_from or date_to) else f"Últimos {period} dias"
     }
     
     output = generate_transactions_pdf(user, transactions, summary_data)
