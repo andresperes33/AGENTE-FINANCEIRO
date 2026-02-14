@@ -26,7 +26,11 @@ class AIAgentService:
     def __init__(self):
         self.api_key = settings.OPENAI_API_KEY
         if HAS_LANGCHAIN and self.api_key:
-            self.llm = ChatOpenAI(temperature=0, model="gpt-4o-mini", api_key=self.api_key)
+            try:
+                self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=self.api_key, temperature=0)
+            except Exception as e:
+                print(f"Erro ao inicializar LLM: {e}")
+                self.llm = None
         else:
             self.llm = None
     
