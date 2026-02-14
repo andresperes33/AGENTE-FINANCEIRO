@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('webhooks/', include('webhooks.urls')),
     path('accounts/', include('accounts.urls')),
+    path('agenda/', include('agenda.urls')),
     path('', include('dashboard.urls')),
 ]
 

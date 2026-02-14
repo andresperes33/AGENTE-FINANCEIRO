@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+{% if appointment %}Editar Compromisso{% else %}Novo Compromisso{% endif %}
+{% endblock %}
+
+{% block header_title %}
+{% if appointment %}Editar Compromisso{% else %}Novo Compromisso{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div class="bg-dark-lighter border border-dark-border rounded-xl p-8 shadow-sm relative overflow-hidden">
+        <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-50">
+        </div>
+
+        <form method="post" action="" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="space-y-2">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]" for="title">O que
+                    temos para hoje?</label>
+                <input type="text" name="title" id="title" value="{{ appointment.title }}"
+                    class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none placeholder:text-slate-600"
+                    placeholder="Ex: Reunião de Marketing, Dentista, Academia..." required>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"
+                        for="date">Data</label>
+                    <input type="date" name="date" id="date" value="{{ date_iso|default:today_iso }}"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none"
+                        required>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"
+                        for="time">Horário</label>
+                    <input type="time" name="time" id="time" value="{{ time_iso|default:'09:00' }}"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none"
+                        required>
+                </div>
+            </div>
+
+            <div class="p-4 bg-primary/5 border border-primary/10 rounded-xl">
+                <div class="flex gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-primary uppercase tracking-wider">Aviso Inteligente</p>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mt-1">Nós enviaremos notificações no seu
+                            WhatsApp 1 hora e 5 minutos antes do início.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-8 border-t border-dark-border/50">
+                <a href="{% url 'agenda:list' %}"
+                    class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-bold bg-dark-lighter hover:bg-slate-700 text-slate-200 border border-dark-border transition-all active:scale-95 text-sm uppercase">
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="inline-flex items-center justify-center px-10 py-3 rounded-lg font-bold bg-primary hover:bg-primary-dark text-white text-base shadow-xl shadow-primary/20 transition-all active:scale-95 uppercase">
+                    {% if appointment %}Salvar Alterações{% else %}Agendar Agora{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

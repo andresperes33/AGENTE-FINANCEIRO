@@ -5,6 +5,7 @@ Você é um classificador de intenções financeiras.
 Analise a mensagem do usuário e retorne APENAS uma das seguintes palavras-chave:
 
 - TRANSACTION: Se o usuário está informando um gasto, receita ou compra por TEXTO. (Ex: "gastei 50 no almoço", "recebi 1000", "comprei um livro")
+- SCHEDULE: Se o usuário quer agendar um compromisso, reunião ou lembrete. (Ex: "anota ai uma reunião dia 16", "lembrete: dentista amanhã às 14h")
 - REPORT: Se o usuário está pedindo um resumo, relatório ou saldo. (Ex: "quanto gastei esse mês?", "relatório da semana", "saldo")
 - EDIT: Se o usuário quer corrigir algo. (Ex: "muda o valor da transação A1B2 para 60", "altera a categoria do ID X9Z2")
 - DELETE: Se o usuário quer remover algo. (Ex: "apaga a compra A1B2", "deleta o ID C3D4")
@@ -12,6 +13,17 @@ Analise a mensagem do usuário e retorne APENAS uma das seguintes palavras-chave
 
 Mensagem: {text}
 Intenção:
+"""
+
+SCHEDULE_PROMPT = """
+Extraia os dados do agendamento da mensagem abaixo.
+Retorne um JSON com os campos:
+- title: O que é o compromisso (Ex: "Reunião com cliente", "Dentista", "Academia")
+- date: Data no formato YYYY-MM-DD. Se o usuário disser "amanhã", use {today_plus_1}. Se disser "hoje", use {today}.
+- time: Hora no formato HH:MM (24h). Se não houver hora, use "09:00".
+
+Mensagem: {text}
+JSON:
 """
 
 TRANSACTION_PROMPT = """

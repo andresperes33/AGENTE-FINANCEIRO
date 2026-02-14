@@ -127,6 +127,17 @@
                         </svg>
                         Relatórios
                     </a>
+                    <a href="{% url 'agenda:list' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if 'agenda' in request.path %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Agenda
+                    </a>
                     <a href="{% url 'dashboard:subscription' %}"
                         class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if 'assinatura' in request.path %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -176,8 +187,10 @@
                 <div
                     class="flex items-center gap-4 bg-dark-lighter p-2 pl-4 rounded-2xl border border-dark-border shadow-sm w-fit">
                     <div class="text-right">
-                        <p class="font-bold text-white text-sm md:text-base leading-tight">{{user.nome|default:user.email }}</p>
-                        <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{{user.email|truncatechars:18 }}</p>
+                        <p class="font-bold text-white text-sm md:text-base leading-tight">
+                            {{user.nome|default:user.email }}</p>
+                        <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                            {{user.email|truncatechars:18 }}</p>
                     </div>
                     <div
                         class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center font-bold text-white shadow-md">

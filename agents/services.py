@@ -1,7 +1,8 @@
 ﻿from django.conf import settings
-from transactions.models import Transaction
 from datetime import datetime, timedelta
 from django.utils import timezone
+from transactions.models import Transaction
+from agenda.models import Appointment
 import json
 import os
 import re
@@ -14,7 +15,7 @@ try:
     from langchain_openai import ChatOpenAI
     from langchain.prompts import PromptTemplate
     from langchain_core.output_parsers import JsonOutputParser
-    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT
+    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT
     HAS_LANGCHAIN = True
 except ImportError:
     HAS_LANGCHAIN = False
@@ -41,6 +42,8 @@ class AIAgentService:
             return self._handle_edit(text, user)
         elif intent == "DELETE":
             return self._handle_delete(text, user)
+        elif intent == "SCHEDULE":
+            return self._handle_schedule(text, user)
         else:
             return "Desculpe, não entendi. Tente algo como 'Gastei 50 no almoço' ou mande um áudio/foto!"
 
@@ -120,6 +123,7 @@ class AIAgentService:
             if any(x in lower_text for x in ['quanto', 'total', 'saldo', 'relatório', 'resumo']): return "REPORT"
             if any(x in lower_text for x in ['muda', 'altera', 'corrige', 'edita']): return "EDIT"
             if any(x in lower_text for x in ['apaga', 'deleta', 'exclui', 'remove']): return "DELETE"
+            if any(x in lower_text for x in ['anota', 'agenda', 'lembrete', 'reunião']): return "SCHEDULE"
             return "OTHER"
         try:
             prompt = PromptTemplate.from_template(ROUTER_PROMPT)
@@ -178,3 +182,35 @@ class AIAgentService:
             response = chain.invoke({"context": context, "question": text})
             return response.content
         except: return context
+
+    def _handle_schedule(self, text, user):
+        try:
+            parser = JsonOutputParser()
+            today = timezone.now()
+            today_str = today.strftime('%Y-%m-%d')
+            tomorrow_str = (today + timedelta(days=1)).strftime('%Y-%m-%d')
+            
+            prompt = PromptTemplate(
+                template=SCHEDULE_PROMPT, 
+                input_variables=["text"], 
+                partial_variables={
+                    "format_instructions": parser.get_format_instructions(),
+                    "today": today_str,
+                    "today_plus_1": tomorrow_str
+                }
+            )
+            chain = prompt | self.llm | parser
+            data = chain.invoke({"text": text})
+            
+            # Combinar data e hora
+            dt_str = f"{data.get('date')} {data.get('time')}"
+            dt_obj = timezone.make_aware(datetime.strptime(dt_str, '%Y-%m-%d %H:%M'))
+            
+            appt = Appointment.objects.create(
+                user=user,
+                title=data.get('title', 'Compromisso'),
+                date_time=dt_obj
+            )
+            return f" ✅ *Compromisso Agendado!* \n📌 {appt.title}\n📅 {dt_obj.strftime('%d/%m/%Y às %H:%M')}\nID: *{appt.identifier}*"
+        except Exception as e:
+            return f"Erro ao agendar: {str(e)}"

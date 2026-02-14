@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'webhooks',
     'dashboard',
     'whatsapp_messages',
+    'agenda',
 ]
 
 MIDDLEWARE = [
@@ -169,6 +170,13 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    'check-notifications-every-minute': {
+        'task': 'agenda.tasks.check_appointment_notifications',
+        'schedule': 60.0, # segundos
+    },
+}
 
 # Login/Logout URLs
 # Login/Logout URLs
