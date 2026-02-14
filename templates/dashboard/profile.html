@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Meu Perfil{% endblock %}
+{% block header_title %}Meu Perfil{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div class="card bg-dark-lighter">
+        <div class="flex items-center gap-4 mb-10 pb-6 border-b border-dark-border">
+            <div
+                class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border-2 border-primary/20">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-display text-2xl font-bold text-white tracking-tight">Informações Pessoais</h3>
+                <p class="text-sm text-slate-500">Gerencie sua conta e configurações de contato</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Nome
+                        Completo</label>
+                    <input type="text" name="nome" value="{{ user.nome }}"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all outline-none"
+                        required>
+                </div>
+
+                <div class="space-y-2 opacity-70">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Email
+                        (Login)</label>
+                    <input type="email" value="{{ user.email }}"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed"
+                        disabled>
+                    <p class="text-[10px] text-slate-600 font-bold uppercase mt-1 px-1">🔒 E-mail fixo para sua
+                        segurança</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Telefone
+                        (WhatsApp)</label>
+                    <input type="text" name="telefone" value="{{ user.telefone }}"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all outline-none"
+                        required>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mt-1 px-1">💡 Usado para envios via
+                        Chat/Voz</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Nova Senha</label>
+                    <input type="password" name="new_password"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all outline-none placeholder:text-slate-700"
+                        placeholder="••••••••••••">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mt-1 px-1">Opcional: mantenha em branco
+                        para não alterar</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-6 border-t border-dark-border">
+                <button type="submit" class="btn btn-primary px-10 py-3 shadow-xl shadow-primary/20">
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="card border-rose-500/10 bg-rose-500/5 group">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-1">
+                <h3 class="font-display font-bold text-lg text-rose-400 flex items-center gap-2 tracking-tight">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Zona de Perigo
+                </h3>
+                <p class="text-slate-500 text-sm max-w-md leading-relaxed">
+                    Deseja cancelar sua assinatura ou deletar sua conta? Todas as suas transações e dados do agente
+                    serão permanentemente apagados e essa ação é **irreversível**.
+                </p>
+            </div>
+            <button
+                class="btn btn-secondary text-rose-400 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/40 px-6 py-2 transition-all active:scale-[0.98]">
+                Excluir Conta
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

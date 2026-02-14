@@ -1,0 +1,346 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
+from django.db.models import Sum, Q
+from django.utils import timezone
+from datetime import datetime, timedelta
+
+from transactions.models import Transaction, TransactionLog
+from subscriptions.models import Subscription
+from .utils import generate_transactions_excel, generate_transactions_pdf
+
+
+@login_required
+def home(request):
+    """Dashboard home com resumo financeiro"""
+    # Forcing reload
+    user = request.user
+    
+    # Data atual
+    today = timezone.now().date()
+    # first_day_month = today.replace(day=1) # Otimização: Usar filtro simples
+    
+    # Transações do mês atual
+    transactions_month = Transaction.objects.filter(
+        user=user,
+        transaction_date__month=today.month,
+        transaction_date__year=today.year
+    )
+    
+    # Cálculos
+    income_month = transactions_month.filter(type='income').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    expense_month = transactions_month.filter(type='expense').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    balance = income_month - expense_month
+    
+    # Últimas transações (limite 5 para dashboard)
+    recent_transactions = Transaction.objects.filter(user=user).order_by('-transaction_date', '-created_at')[:5]
+    
+    context = {
+        'income_month': income_month,
+        'expense_month': expense_month,
+        'balance': balance,
+        'recent_transactions': recent_transactions,
+        'now': timezone.now(),
+        # 'today_iso': today.isoformat(), # Não usado no template
+    }
+    
+    return render(request, 'dashboard/home.html', context)
+
+
+@login_required
+def transactions_list(request):
+    """Lista todas as transações"""
+    user = request.user
+    
+    # Filtros
+    type_filter = request.GET.get('type')
+    category_filter = request.GET.get('category')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    transactions = Transaction.objects.filter(user=user)
+    
+    if type_filter:
+        transactions = transactions.filter(type=type_filter)
+    
+    if category_filter:
+        transactions = transactions.filter(category=category_filter)
+    
+    if date_from:
+        transactions = transactions.filter(transaction_date__gte=date_from)
+    
+    if date_to:
+        transactions = transactions.filter(transaction_date__lte=date_to)
+    
+    # Categorias únicas para filtro
+    categories = Transaction.objects.filter(user=user).values_list('category', flat=True).distinct()
+    
+    context = {
+        'transactions': transactions,
+        'categories': categories,
+        'type_filter': type_filter,
+        'category_filter': category_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    
+    return render(request, 'dashboard/transactions_list.html', context)
+
+
+@login_required
+def transaction_create(request):
+    """Criar nova transação"""
+    if request.method == 'POST':
+        description = request.POST.get('description')
+        category = request.POST.get('category')
+        amount_raw = request.POST.get('amount', '0').replace(',', '.')
+        type_tx = request.POST.get('type')
+        transaction_date = request.POST.get('transaction_date')
+        
+        try:
+            Transaction.objects.create(
+                user=request.user,
+                description=description,
+                category=category,
+                amount=float(amount_raw),
+                type=type_tx,
+                transaction_date=transaction_date or timezone.now().date()
+            )
+            messages.success(request, 'Transação criada com sucesso!')
+            return redirect('dashboard:transactions_list')
+        except Exception as e:
+            messages.error(request, f'Erro ao criar transação: {e}')
+    
+    context = {
+        'today_iso': timezone.now().date().isoformat(),
+    }
+    return render(request, 'dashboard/transaction_form.html', context)
+
+
+@login_required
+def transaction_edit(request, pk):
+    """Editar transação"""
+    transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        # Salvar valores antigos para log
+        old_values = {
+            'description': transaction.description,
+            'category': transaction.category,
+            'amount': str(transaction.amount),
+            'type': transaction.type,
+            'transaction_date': str(transaction.transaction_date),
+        }
+        
+        try:
+            # Atualizar campos
+            transaction.description = request.POST.get('description')
+            transaction.category = request.POST.get('category')
+            amount_raw = request.POST.get('amount', '0').replace(',', '.')
+            transaction.amount = float(amount_raw)
+            transaction.type = request.POST.get('type')
+            transaction_date = request.POST.get('transaction_date')
+            if transaction_date:
+                transaction.transaction_date = transaction_date
+            
+            transaction.save()
+            
+            # Criar logs de alteração
+            for field, old_value in old_values.items():
+                new_value = str(getattr(transaction, field))
+                if old_value != new_value:
+                    TransactionLog.objects.create(
+                        transaction=transaction,
+                        field_name=field,
+                        old_value=old_value,
+                        new_value=new_value
+                    )
+            
+            messages.success(request, 'Transação atualizada com sucesso!')
+            return redirect('dashboard:transactions_list')
+        except Exception as e:
+            messages.error(request, f'Erro ao atualizar transação: {e}')
+    
+    context = {
+        'transaction': transaction,
+        'today_iso': timezone.now().date().isoformat(),
+    }
+    return render(request, 'dashboard/transaction_form.html', context)
+
+
+
+@login_required
+def transaction_delete(request, pk):
+    """Deletar transação"""
+    transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        transaction.delete()
+        messages.success(request, 'Transação deletada com sucesso!')
+        return redirect('dashboard:transactions_list')
+    
+    context = {'transaction': transaction}
+    return render(request, 'dashboard/transaction_confirm_delete.html', context)
+
+
+@login_required
+def reports(request):
+    """Relatórios financeiros"""
+    user = request.user
+    
+    # Período
+    period = request.GET.get('period', '30')  # dias
+    days = int(period)
+    
+    start_date = timezone.now().date() - timedelta(days=days)
+    
+    transactions = Transaction.objects.filter(
+        user=user,
+        transaction_date__gte=start_date
+    )
+    
+    # Por tipo
+    income_total = transactions.filter(type='income').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    expense_total = transactions.filter(type='expense').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    # Por categoria
+    expenses_by_category = transactions.filter(type='expense').values('category').annotate(
+        total=Sum('amount')
+    ).order_by('-total')
+    
+    income_by_category = transactions.filter(type='income').values('category').annotate(
+        total=Sum('amount')
+    ).order_by('-total')
+    
+    context = {
+        'period': period,
+        'income_total': income_total,
+        'expense_total': expense_total,
+        'balance': income_total - expense_total,
+        'expenses_by_category': expenses_by_category,
+        'income_by_category': income_by_category,
+        # Dados para Gráficos
+        'cash_flow_data': [float(income_total), float(expense_total)],
+        'expense_labels': [item['category'] for item in expenses_by_category],
+        'expense_data': [float(item['total']) for item in expenses_by_category],
+    }
+    
+    return render(request, 'dashboard/reports.html', context)
+
+
+@login_required
+def subscription_detail(request):
+    """Detalhes da assinatura"""
+    subscription = get_object_or_404(Subscription, user=request.user)
+    
+    context = {'subscription': subscription}
+    return render(request, 'dashboard/subscription.html', context)
+
+
+@login_required
+def profile(request):
+    """Perfil do usuário"""
+    user = request.user
+    
+    if request.method == 'POST':
+        user.nome = request.POST.get('nome')
+        user.telefone = request.POST.get('telefone')
+        
+        # Atualizar senha se fornecida
+        new_password = request.POST.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+            user.must_change_password = False
+        
+        user.save()
+
+        messages.success(request, 'Perfil atualizado com sucesso!')
+        return redirect('dashboard:profile')
+    
+    context = {'user': user}
+    return render(request, 'dashboard/profile.html', context)
+
+@login_required
+def export_excel(request):
+    """Exporta transações para Excel"""
+    user = request.user
+    
+    # Filtros (mesma lógica da listagem)
+    type_filter = request.GET.get('type')
+    category_filter = request.GET.get('category')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    transactions = Transaction.objects.filter(user=user)
+    
+    if type_filter:
+        transactions = transactions.filter(type=type_filter)
+    if category_filter:
+        transactions = transactions.filter(category=category_filter)
+    if date_from:
+        transactions = transactions.filter(transaction_date__gte=date_from)
+    if date_to:
+        transactions = transactions.filter(transaction_date__lte=date_to)
+    
+    output = generate_transactions_excel(transactions)
+    
+    filename = f"transacoes_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    return response
+
+
+@login_required
+def export_pdf(request):
+    """Exporta relatório PDF com gráficos"""
+    user = request.user
+    
+    # Período (últimos 30 dias por padrão ou conforme filtro)
+    period = request.GET.get('period', '30')
+    days = int(period)
+    start_date = timezone.now().date() - timedelta(days=days)
+    
+    transactions = Transaction.objects.filter(
+        user=user,
+        transaction_date__gte=start_date
+    ).order_by('-transaction_date')
+    
+    # Dados para o resumo e gráficos
+    income_total = transactions.filter(type='income').aggregate(Sum('amount'))['amount__sum'] or 0
+    expense_total = transactions.filter(type='expense').aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    expenses_by_category = transactions.filter(type='expense').values('category').annotate(
+        total=Sum('amount')
+    ).order_by('-total')
+    
+    summary_data = {
+        'income_total': float(income_total),
+        'expense_total': float(expense_total),
+        'balance': float(income_total - expense_total),
+        'expense_labels': [item['category'] for item in expenses_by_category],
+        'expense_data': [float(item['total']) for item in expenses_by_category],
+    }
+    
+    output = generate_transactions_pdf(user, transactions, summary_data)
+    
+    filename = f"relatorio_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    response = HttpResponse(output, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    return response

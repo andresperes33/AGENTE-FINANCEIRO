@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Transação{% endblock %}
+{% block header_title %}Excluir Transação{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto animate-in fade-in zoom-in-95 duration-500">
+    <div class="card border-rose-500/20 bg-dark-lighter shadow-2xl overflow-hidden relative">
+        <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-50">
+        </div>
+
+        <div class="p-8 text-center">
+            <div
+                class="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 mx-auto mb-6 border border-rose-500/20 shadow-inner">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+            </div>
+
+            <h3 class="font-display font-bold text-2xl text-white mb-4 tracking-tight">Tem certeza?</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-8">
+                Você está prestes a excluir permanentemente a transação:<br>
+                <span class="text-white font-bold text-lg mt-2 block">"{{ transaction.description }}"</span>
+                <span class="text-rose-400 font-bold block mt-1">R$ {{ transaction.amount }}</span>
+            </p>
+
+            <form method="post" class="flex flex-col gap-3">
+                {% csrf_token %}
+                <button type="submit"
+                    class="btn bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 shadow-xl shadow-rose-500/20 transition-all active:scale-[0.98]">
+                    Confirmar Exclusão
+                </button>
+                <a href="{% url 'dashboard:transactions_list' %}" class="btn btn-secondary py-3 font-bold">
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

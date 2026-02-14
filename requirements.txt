@@ -1,0 +1,36 @@
+# Django Core
+Django==5.0.1
+django-environ==0.11.2
+
+# Database
+psycopg2-binary==2.9.9
+
+# API & Webhooks
+requests==2.31.0
+django-cors-headers==4.3.1
+
+# LangChain & IA
+langchain==0.1.6
+langchain-openai==0.0.5
+openai==1.10.0
+
+# WhatsApp Integration
+twilio==8.11.1
+
+# Payment
+stripe==8.0.0
+
+# Utilities
+python-dotenv==1.0.1
+Pillow==10.2.0
+celery==5.3.6
+redis==5.0.1
+
+# Development
+django-debug-toolbar==4.2.0
+
+# Export
+reportlab==4.0.9
+openpyxl==3.1.2
+pandas==2.2.0
+matplotlib==3.8.2

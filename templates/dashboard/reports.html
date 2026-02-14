@@ -1,0 +1,206 @@
+﻿{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Relatórios{% endblock %}
+{% block header_title %}Relatórios Financeiros{% endblock %}
+{% block content %}
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="font-display text-xl font-bold text-white">Análise de Performance</h3>
+            <p class="text-sm text-slate-500">Acompanhe seu desempenho financeiro detalhado</p>
+        </div>
+        <div class="bg-dark p-1 rounded-xl border border-dark-border flex">
+            <a href="?period=7"
+                class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all {% if period == '7' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-slate-500 hover:text-slate-300{% endif %}">7
+                Dias</a>
+            <a href="?period=30"
+                class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all {% if period == '30' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-slate-500 hover:text-slate-300{% endif %}">30
+                Dias</a>
+            <a href="?period=90"
+                class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all {% if period == '90' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-slate-500 hover:text-slate-300{% endif %}">90
+                Dias</a>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="card bg-dark-lighter shadow-sm group">
+            <div class="flex items-center gap-3 mb-8">
+                <div
+                    class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </div>
+                <h3 class="font-display font-bold text-lg text-white group-hover:text-primary transition-colors">Fluxo
+                    de Caixa Entradas vs Saídas</h3>
+            </div>
+            <div class="relative h-[250px] w-full"><canvas id="cashFlowChart"></canvas></div>
+        </div>
+        <div class="card bg-dark-lighter shadow-sm group">
+            <div class="flex items-center gap-3 mb-8">
+                <div
+                    class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-display font-bold text-lg text-white group-hover:text-orange-400 transition-colors">
+                    Composição de Gastos</h3>
+            </div>
+            <div class="relative h-[250px] w-full"><canvas id="expensesChart"></canvas></div>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="card !p-0 overflow-hidden border-rose-500/10">
+            <div class="p-6 border-b border-dark-border flex items-center justify-between bg-rose-500/5">
+                <h3 class="font-display font-bold text-lg text-rose-400">Maiores Despesas</h3>
+                <span
+                    class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 uppercase">GASTOS</span>
+            </div>
+            <div class="p-0">
+                <table class="w-full text-left">
+                    <tbody class="divide-y divide-dark-border/50">
+                        {% for item in expenses_by_category %}
+                        <tr class="hover:bg-slate-800/30 transition-colors">
+                            <td class="px-6 py-4 font-semibold text-slate-300">{{ item.category }}</td>
+                            <td class="px-6 py-4 text-right font-display font-bold text-rose-400 text-lg">R$ {{item.total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="px-6 py-12 text-center text-slate-500 italic">Nenhum dado de despesa
+                                para este período</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card !p-0 overflow-hidden border-emerald-500/10">
+            <div class="p-6 border-b border-dark-border flex items-center justify-between bg-emerald-500/5">
+                <h3 class="font-display font-bold text-lg text-emerald-400">Fontes de Receita</h3>
+                <span
+                    class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase">LUCRO</span>
+            </div>
+            <div class="p-0">
+                <table class="w-full text-left">
+                    <tbody class="divide-y divide-dark-border/50">
+                        {% for item in income_by_category %}
+                        <tr class="hover:bg-slate-800/30 transition-colors">
+                            <td class="px-6 py-4 font-semibold text-slate-300">{{ item.category }}</td>
+                            <td class="px-6 py-4 text-right font-display font-bold text-emerald-400 text-lg">R$ {{item.total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="px-6 py-12 text-center text-slate-500 italic">Nenhum dado de receita
+                                para este período</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{{ cash_flow_data|json_script:"cash-flow-data" }}
+{{ expense_labels|json_script:"expense-labels" }}
+{{ expense_data|json_script:"expense-data" }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.weight = '500';
+        const cashFlowData = JSON.parse(document.getElementById('cash-flow-data').textContent);
+        const expenseLabels = JSON.parse(document.getElementById('expense-labels').textContent);
+        const expenseData = JSON.parse(document.getElementById('expense-data').textContent);
+        const ctxFlow = document.getElementById('cashFlowChart').getContext('2d');
+        const gradientIn = ctxFlow.createLinearGradient(0, 0, 0, 400);
+        gradientIn.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+        gradientIn.addColorStop(1, 'rgba(34, 197, 94, 0.2)');
+        const gradientOut = ctxFlow.createLinearGradient(0, 0, 0, 400);
+        gradientOut.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
+        gradientOut.addColorStop(1, 'rgba(239, 68, 68, 0.2)');
+        new Chart(ctxFlow, {
+            type: 'bar',
+            data: {
+                labels: ['ENTRADAS (+)', 'SAÍDAS (-)'],
+                datasets: [{
+                    data: cashFlowData,
+                    backgroundColor: [gradientIn, gradientOut],
+                    borderColor: ['#16a34a', '#dc2626'],
+                    borderWidth: 2,
+                    borderRadius: 12,
+                    hoverBorderWidth: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        padding: 12,
+                        cornerRadius: 12,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(51, 65, 85, 0.3)', drawBorder: false },
+                        ticks: {
+                            callback: value => 'R$ ' + value.toLocaleString('pt-BR')
+                        }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+        const ctxExp = document.getElementById('expensesChart').getContext('2d');
+        new Chart(ctxExp, {
+            type: 'doughnut',
+            data: {
+                labels: expenseLabels,
+                datasets: [{
+                    data: expenseData,
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'
+                    ],
+                    borderWidth: 8,
+                    borderColor: '#1e293b',
+                    hoverOffset: 15,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        cornerRadius: 12
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+﻿{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Visão Geral{% endblock %}
+{% block header_title %}Visão Geral{% endblock %}
+{% block content %}
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <!-- Resumo de Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Saldo -->
+        <div
+            class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300">
+            <div
+                class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110">
+            </div>
+            <div class="relative flex justify-between items-start">
+                <div class="space-y-1">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Saldo Total</p>
+                    <h2 class="text-3xl font-display font-bold text-white tracking-tight">R$ {{ balance|floatformat:2 }}
+                    </h2>
+                </div>
+                <div
+                    class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center gap-2">
+                <span
+                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-dark-border uppercase">Geral</span>
+                <p class="text-xs text-slate-500 font-medium leading-none">Patrimônio acumulado</p>
+            </div>
+        </div>
+
+        <!-- Receitas -->
+        <div
+            class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300">
+            <div
+                class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110">
+            </div>
+            <div class="relative flex justify-between items-start">
+                <div class="space-y-1">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Receitas (Mês)</p>
+                    <h2 class="text-3xl font-display font-bold text-emerald-400 tracking-tight">R$ {{income_month|floatformat:2 }}</h2>
+                </div>
+                <div
+                    class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 shadow-inner">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center gap-2">
+                <span
+                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase">{{now|date:"F" }}</span>
+                <p class="text-xs text-slate-500 font-medium leading-none">Total depositado no mês</p>
+            </div>
+        </div>
+
+        <!-- Despesas -->
+        <div
+            class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-rose-500/5 transition-all duration-300">
+            <div
+                class="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110">
+            </div>
+            <div class="relative flex justify-between items-start">
+                <div class="space-y-1">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Despesas (Mês)</p>
+                    <h2 class="text-3xl font-display font-bold text-rose-400 tracking-tight">R$ {{expense_month|floatformat:2 }}</h2>
+                </div>
+                <div
+                    class="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-400 shadow-inner">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                        <polyline points="17 18 23 18 23 12"></polyline>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center gap-2">
+                <span
+                    class="flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 uppercase">{{now|date:"F" }}</span>
+                <p class="text-xs text-slate-500 font-medium leading-none">Total gasto no mês</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Tabela Recentes -->
+        <div
+            class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm lg:col-span-2 shadow-sm border-dark-border/50">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="font-display text-xl font-bold text-white tracking-tight">Lançamentos Recentes</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1 uppercase tracking-wider">Últimas movimentações
+                    </p>
+                </div>
+                <a href="{% url 'dashboard:transactions_list' %}"
+                    class="px-4 py-2 bg-slate-800 text-slate-300 text-[10px] font-bold rounded-lg border border-dark-border hover:bg-slate-700 transition-all uppercase tracking-widest">Ver
+                    tudo</a>
+            </div>
+
+            {% if recent_transactions %}
+            <div class="space-y-4">
+                {% for transaction in recent_transactions %}
+                <div
+                    class="group flex items-center justify-between p-4 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-dark-border transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm transition-transform group-hover:scale-110 {% if transaction.type == 'income' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% else %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% endif %}">
+                            {{ transaction.category|first|upper }}
+                        </div>
+                        <div>
+                            <p
+                                class="font-bold text-slate-200 text-sm group-hover:text-white transition-colors leading-tight">
+                                {{ transaction.description }}</p>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{{transaction.transaction_date|date:"d M Y" }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p
+                            class="font-display font-bold text-base {% if transaction.type == 'income' %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                            {% if transaction.type == 'income' %}+{% else %}-{% endif %} R$ {{transaction.amount|floatformat:2 }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-12 text-center opacity-40">
+                <svg class="text-slate-500 mb-4" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <p class="text-slate-400 font-bold text-sm uppercase tracking-widest">Sem lançamentos</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Dashboard -->
+        <div class="space-y-6">
+            <!-- Card CTA -->
+            <div
+                class="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-8 text-white shadow-2xl shadow-primary/20 relative overflow-hidden group">
+                <div
+                    class="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-500">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <div class="relative z-10">
+                    <h3 class="font-display text-2xl font-bold leading-tight mb-4 text-white">Crescer suas finanças
+                        começa aqui.</h3>
+                    <p class="text-white/80 text-sm mb-8 font-medium leading-relaxed">Adicione seu primeiro lançamento
+                        manualmente para que o I.A. comece a otimizar sua vida financeira.</p>
+                    <a href="{% url 'dashboard:transaction_create' %}"
+                        class="inline-flex items-center justify-center gap-3 w-full bg-white text-primary font-bold py-4 px-6 rounded-2xl shadow-xl hover:bg-slate-50 transition-all active:scale-95 group/btn">
+                        <svg class="transition-transform group-hover/btn:scale-125" width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Novo Lançamento
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ajuda/Status -->
+            <div class="bg-dark-lighter border border-dark-border rounded-xl p-6">
+                <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Status do Sistema</h4>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-400">Motor de I.A.</span>
+                        <span
+                            class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 uppercase">Ativo</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-400">Sincronização</span>
+                        <span
+                            class="flex items-center gap-1.5 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20 uppercase tracking-tighter">Ok</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

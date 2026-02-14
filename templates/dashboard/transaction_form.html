@@ -1,0 +1,153 @@
+﻿{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+{% if transaction %}Editar Transação{% else %}Nova Transação{% endif %}
+{% endblock %}
+
+{% block header_title %}
+{% if transaction %}Editar Transação{% else %}Nova Transação{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm relative overflow-hidden">
+        <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-50">
+        </div>
+
+        <form method="post" action="" class="space-y-8">
+            {% csrf_token %}
+
+            <!-- Tipo de Transação -->
+            <div class="space-y-4">
+                <label class="block text-sm font-semibold text-slate-400 uppercase tracking-widest">Tipo de
+                    Transação</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Receita -->
+                    <label
+                        class="relative flex items-center justify-center p-4 rounded-2xl border-2 border-dark-border cursor-pointer transition-all duration-300 group hover:border-emerald-500/30">
+                        {% if transaction.type == 'income' or not transaction %}
+                        <input type="radio" name="type" value="income" class="peer sr-only" checked required>
+                        {% else %}
+                        <input type="radio" name="type" value="income" class="peer sr-only" required>
+                        {% endif %}
+                        <div
+                            class="flex flex-col items-center gap-2 peer-checked:bg-emerald-500/10 w-full h-full absolute inset-0 rounded-2xl transition-all border-emerald-500 peer-checked:border-2">
+                        </div>
+                        <div class="relative flex flex-col items-center gap-2">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                    <polyline points="17 6 23 6 23 12"></polyline>
+                                </svg>
+                            </div>
+                            <span class="font-bold text-slate-300 uppercase text-xs tracking-widest">Receita</span>
+                        </div>
+                    </label>
+
+                    <!-- Despesa -->
+                    <label
+                        class="relative flex items-center justify-center p-4 rounded-2xl border-2 border-dark-border cursor-pointer transition-all duration-300 group hover:border-rose-500/30">
+                        {% if transaction.type == 'expense' %}
+                        <input type="radio" name="type" value="expense" class="peer sr-only" checked required>
+                        {% else %}
+                        <input type="radio" name="type" value="expense" class="peer sr-only" required>
+                        {% endif %}
+                        <div
+                            class="flex flex-col items-center gap-2 peer-checked:bg-rose-500/10 w-full h-full absolute inset-0 rounded-2xl transition-all border-rose-500 peer-checked:border-2">
+                        </div>
+                        <div class="relative flex flex-col items-center gap-2">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                                    <polyline points="17 18 23 18 23 12"></polyline>
+                                </svg>
+                            </div>
+                            <span class="font-bold text-slate-300 uppercase text-xs tracking-widest">Despesa</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Campos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-dark/30 rounded-2xl border border-dark-border/50">
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"
+                            for="amount">Valor Total</label>
+                        <div class="relative group">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-primary transition-colors">
+                                <span class="font-bold">R$</span>
+                            </div>
+                            <input type="number" step="0.01" name="amount" id="amount"
+                                value="{% if transaction.amount %}{{ transaction.amount|stringformat:'.2f' }}{% endif %}"
+                                class="w-full bg-dark border-2 border-dark-border rounded-xl pl-12 pr-4 py-4 text-2xl font-display font-bold text-white focus:outline-none focus:border-primary transition-all placeholder:text-slate-700"
+                                placeholder="0,00" required>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"
+                            for="transaction_date">Data da Operação</label>
+                        <input type="date" name="transaction_date" id="transaction_date"
+                            value="{{ transaction.transaction_date|date:'Y-m-d'|default:today_iso }}"
+                            class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none"
+                            required>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"
+                            for="description">Descrição</label>
+                        <input type="text" name="description" id="description" value="{{ transaction.description }}"
+                            class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none placeholder:text-slate-600"
+                            placeholder="Ex: Assinatura Netflix, Supermercado..." required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]"
+                            for="category">Categoria</label>
+                        <input type="text" name="category" id="category" value="{{ transaction.category }}"
+                            class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-4 text-white focus:outline-none focus:border-primary transition-all outline-none placeholder:text-slate-600"
+                            list="category-list" placeholder="Selecione ou digite..." required>
+                        <datalist id="category-list">
+                            <option value="Alimentação">
+                            <option value="Transporte">
+                            <option value="Moradia">
+                            <option value="Salário">
+                            <option value="Lazer">
+                            <option value="Saúde">
+                            <option value="Educação">
+                            <option value="Investimentos">
+                        </datalist>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-6">
+                <a href="{% url 'dashboard:transactions_list' %}"
+                    class="inline-flex items-center justify-center px-8 py-3 rounded-lg font-bold bg-dark-lighter hover:bg-slate-700 text-slate-200 border border-dark-border transition-all active:scale-95 text-left text-sm uppercase">
+                    <svg class="mr-2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="inline-flex items-center justify-center px-12 py-3 rounded-lg font-bold bg-primary hover:bg-primary-dark text-white text-base shadow-xl shadow-primary/20 transition-all active:scale-95 text-left uppercase">
+                    <svg class="mr-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Salvar Lançamento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard Financeiro{% endblock %} | Agente Financeiro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: '#22c55e', dark: '#16a34a', light: '#4ade80' },
+                        dark: { DEFAULT: '#0f172a', lighter: '#1e293b', border: '#334155' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Outfit', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
+    <style>
+        @media (max-width: 1024px) {
+            .sidebar-closed {
+                transform: translateX(-100%);
+            }
+
+            .sidebar-open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-dark text-slate-200 font-sans overflow-x-hidden">
+    <!-- Mobile Header -->
+    <div
+        class="lg:hidden bg-dark-lighter border-b border-dark-border p-4 sticky top-0 z-[60] flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/30 text-white">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+            </div>
+            <span class="font-display font-bold text-white uppercase tracking-tight">Agente.ai</span>
+        </div>
+        <button id="sidebarToggle" class="p-2 text-slate-400 hover:text-white transition-colors">
+            <svg id="menuIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+
+    <div class="min-h-screen flex relative">
+        <!-- Backdrop -->
+        <div id="sidebarBackdrop"
+            class="fixed inset-0 bg-black/60 z-[40] transition-opacity duration-300 hidden lg:hidden opacity-0"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="w-64 bg-dark border-r border-dark-border fixed h-full z-50 transition-all duration-300 sidebar-closed lg:translate-x-0">
+            <div class="p-6 h-full flex flex-col">
+                <div
+                    class="hidden lg:flex items-center gap-3 font-display text-2xl font-bold text-white tracking-tight">
+                    <div
+                        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                    </div>
+                    <span>Agente.ai</span>
+                </div>
+
+                <div class="mt-8 mb-6">
+                    <a href="{% url 'dashboard:transaction_create' %}"
+                        class="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm uppercase">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Novo Lançamento
+                    </a>
+                </div>
+
+                <nav class="space-y-1 flex-1">
+                    <a href="{% url 'dashboard:home' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="{% url 'dashboard:transactions_list' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if 'transacoes' in request.path and 'criar' not in request.path %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        Transações
+                    </a>
+                    <a href="{% url 'dashboard:reports' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if 'relatorios' in request.path %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 20V10M12 20V4M6 20V14"></path>
+                        </svg>
+                        Relatórios
+                    </a>
+                    <a href="{% url 'dashboard:subscription' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if 'assinatura' in request.path %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                        </svg>
+                        Assinatura
+                    </a>
+                    <div class="pt-4 mt-4 border-t border-dark-border">
+                        <a href="{% url 'dashboard:profile' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {% if 'perfil' in request.path %}bg-primary/10 text-primary-light font-medium{% else %}text-slate-400 hover:text-white hover:bg-slate-800/50{% endif %}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Perfil
+                        </a>
+                        <form action="{% url 'accounts:logout' %}" method="post" class="mt-2 text-left">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:text-red-400 hover:bg-red-400/5 group text-left">
+                                <svg class="group-hover:text-red-400 transition-colors" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                <span>Sair</span>
+                            </button>
+                        </form>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-4 md:p-8 min-w-0 transition-all duration-300">
+            <header class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-10">
+                <div class="space-y-1">
+                    <h1 class="text-2xl md:text-3xl font-bold font-display tracking-tight text-white mb-2">
+                        {% block header_title %}Geral{% endblock %}
+                    </h1>
+                    <p class="text-slate-400 text-sm font-medium">Controle financeiro inteligente</p>
+                </div>
+                <div
+                    class="flex items-center gap-4 bg-dark-lighter p-2 pl-4 rounded-2xl border border-dark-border shadow-sm w-fit">
+                    <div class="text-right">
+                        <p class="font-bold text-white text-sm md:text-base leading-tight">{{user.nome|default:user.email }}</p>
+                        <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{{user.email|truncatechars:18 }}</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center font-bold text-white shadow-md">
+                        {{ user.nome|first|upper|default:user.email|first|upper }}
+                    </div>
+                </div>
+            </header>
+
+            {% if messages %}
+            <div class="mb-8 space-y-3">
+                {% for message in messages %}
+                <div
+                    class="p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 {% if message.tags == 'success' %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400{% elif message.tags == 'error' %}bg-rose-500/10 border-rose-500/20 text-rose-400{% else %}bg-sky-500/10 border-sky-500/20 text-sky-400{% endif %}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        {% if message.tags == 'success' %}<polyline points="20 6 9 17 4 12"></polyline>
+                        {% elif message.tags == 'error' %}<circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        {% else %}<circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>{% endif %}
+                    </svg>
+                    <span class="font-semibold text-sm">{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if user.is_authenticated and user.must_change_password %}
+            <div
+                class="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between animate-pulse">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-500 border border-amber-500/30">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                            </path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-amber-500">Ação Necessária: Altere sua Senha</p>
+                        <p class="text-xs text-amber-500/70">Você está usando uma senha temporária. Por segurança,
+                            altere-a agora.</p>
+                    </div>
+                </div>
+                <a href="{% url 'dashboard:profile' %}"
+                    class="px-4 py-2 bg-amber-500 text-dark-lighter text-xs font-bold rounded-lg hover:bg-amber-400 transition-colors uppercase">Alterar
+                    Agora</a>
+            </div>
+            {% endif %}
+
+            <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">{% block content %}{% endblock %}</div>
+
+        </main>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        const menuIcon = document.getElementById('menuIcon');
+
+        function toggleSidebar() {
+            const isOpen = sidebar.classList.contains('sidebar-open');
+            if (isOpen) {
+                sidebar.classList.remove('sidebar-open');
+                sidebar.classList.add('sidebar-closed');
+                backdrop.classList.add('hidden');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                menuIcon.innerHTML = `<line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>`;
+            } else {
+                sidebar.classList.remove('sidebar-closed');
+                sidebar.classList.add('sidebar-open');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => {
+                    backdrop.classList.remove('opacity-0');
+                    backdrop.classList.add('opacity-100');
+                }, 10);
+                menuIcon.innerHTML = `<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="12"></line><line x1="6" y1="6" x2="18" y2="18"></line>`;
+            }
+        }
+
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        backdrop.addEventListener('click', toggleSidebar);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
