@@ -93,17 +93,17 @@ def evolution_webhook(request):
         user = User.objects.filter(telefone__icontains=from_number[-8:]).first()
         evo = EvolutionService()
         
-        if not user:
-            evo.send_message(from_number, "Assine o Agente.ai para usar estas funções: https://pay.kirvano.com/")
-            return JsonResponse({'status': 'sent_checkout'}, status=200)
-            
         subscription = Subscription.objects.filter(user=user).first()
-        if not subscription or subscription.status != 'active':
-            evo.send_message(from_number, "Assinatura inativa.")
-            return JsonResponse({'status': 'inactive'}, status=200)
-
         from agents.services import AIAgentService
         agent = AIAgentService()
+        
+        # Obter o corpo do texto para a I.A. responder mesmo se for inativo
+        body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', 'Olá')
+
+        if not subscription or subscription.status != 'active':
+            response_text = agent.process_inactive_user(body)
+            evo.send_message(from_number, response_text)
+            return JsonResponse({'status': 'inactive_humanized'}, status=200)
         
         # LÓGICA DE DETECÇÃO DE TIPO DE MENSAGEM
         response_text = ""

@@ -15,7 +15,7 @@ try:
     from langchain_openai import ChatOpenAI
     from langchain.prompts import PromptTemplate
     from langchain_core.output_parsers import JsonOutputParser
-    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT
+    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT
     HAS_LANGCHAIN = True
 except ImportError:
     HAS_LANGCHAIN = False
@@ -46,6 +46,19 @@ class AIAgentService:
             return self._handle_schedule(text, user)
         else:
             return "Desculpe, não entendi. Tente algo como 'Gastei 50 no almoço' ou mande um áudio/foto!"
+
+    def process_inactive_user(self, text):
+        """Gera uma resposta humanizada para usuários sem assinatura ativa"""
+        if not self.llm:
+            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/"
+        
+        try:
+            prompt = PromptTemplate.from_template(INACTIVE_PROMPT)
+            chain = prompt | self.llm
+            response = chain.invoke({"text": text})
+            return response.content
+        except:
+            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/"
 
     def process_image(self, image_url, user):
         """Analisa imagem de comprovante usando Vision do GPT-4o-mini"""
