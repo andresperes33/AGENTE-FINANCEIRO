@@ -43,12 +43,14 @@
 
         {% if transactions %}
         <div class="overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="w-full text-left border-collapse">
                 <thead>
                     <tr
                         class="bg-dark/50 text-slate-500 uppercase text-[10px] font-bold tracking-[0.2em] border-b border-dark-border/50">
-                        <th class="px-6 py-4">ID / Data</th>
+                        <th class="px-6 py-4">ID</th>
+                        <th class="px-6 py-4">Data</th>
                         <th class="px-6 py-4">Descrição</th>
+                        <th class="px-6 py-4">Categoria</th>
                         <th class="px-6 py-4 text-right">Valor</th>
                     </tr>
                 </thead>
@@ -57,15 +59,16 @@
                     <tr class="hover:bg-slate-800/20 group transition-all text-white">
                         <td class="px-6 py-5 whitespace-nowrap">
                             <span
-                                class="block bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded border border-dark-border font-mono w-max mb-1 js-fill"
+                                class="bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded border border-dark-border font-mono js-fill"
                                 data-val="{{ t.identifier }}"></span>
-                            <span class="text-xs text-slate-500 font-mono">{{ t.transaction_date|date:"d/m/Y" }}</span>
                         </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-xs text-slate-500 font-mono">
+                            {{ t.transaction_date|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-5 font-bold text-slate-200 text-sm group-hover:text-white transition-colors js-fill"
+                            data-val="{{ t.description }}"></td>
                         <td class="px-6 py-5">
-                            <p class="font-bold text-slate-200 text-sm group-hover:text-white transition-colors js-fill"
-                                data-val="{{ t.description }}"></p>
-                            <span
-                                class="text-[10px] font-bold text-primary uppercase tracking-widest mt-1 block js-fill"
+                            <span class="text-[10px] font-bold text-primary uppercase tracking-widest js-fill"
                                 data-val="{{ t.category }}"></span>
                         </td>
                         <td
@@ -84,10 +87,10 @@
     </div>
 </div>
 <script>
-    // Seleção de filtros
+    // Configuração dos filtros
     document.getElementById('type_filter_select').value = "{{ type_filter|default:'' }}";
     document.getElementById('category_filter_select').value = "{{ category_filter|default:'' }}";
-    // Preenchimento de dados para evitar quebra do formatador
+    // Preenchimento de dados seguro (Imune a formatadores)
     document.querySelectorAll('.js-fill').forEach(el => { el.textContent = el.getAttribute('data-val'); });
 </script>
 {% endblock %}
