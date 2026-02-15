@@ -31,12 +31,12 @@ REGRAS:
 
 ATENÇÃO: Extraia APENAS o que está nesta mensagem. Ignore conversas anteriores.
 
-Retorne JSON:
+Retorne JSON VÁLIDO:
 {{
-  "title": "título",
-  "date": "YYYY-MM-DD",
-  "time": "HH:MM",
-  "missing_info": false
+  "title": "título ou null",
+  "date": "YYYY-MM-DD ou null",
+  "time": "HH:MM ou null",
+  "missing_info": true ou false
 }}
 """
 
