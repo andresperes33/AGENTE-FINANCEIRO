@@ -29,6 +29,9 @@ REGRAS:
    - "Hoje" = {today}.
    - Se não tiver data, use {today}.
 3. **time**: Hora no formato HH:MM. 
+   - "de manhã" -> use "09:00".
+   - "de tarde" -> use "15:00".
+   - "de noite" -> use "20:00".
    - Se disser "lá pelas 4", assuma 16:00.
    - Se não disser nada, use "09:00".
 
