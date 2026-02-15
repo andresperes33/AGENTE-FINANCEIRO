@@ -10,6 +10,7 @@ import hmac
 import random
 import string
 import os
+from datetime import timedelta
 
 from .models import WebhookEvent
 from subscriptions.models import Subscription
@@ -91,15 +92,29 @@ def process_kirvano_event(payload, event_type):
             user.save()
             
         sub_id = payload.get('sale_id') or payload.get('id') or payload.get('subscription', {}).get('id') or 'TEST_ID'
-        plan_name = plan_data.get('name') or payload.get('plan_name') or 'Assistente Financeiro'
+        plan_name = (plan_data.get('name') or payload.get('plan_name') or 'Assistente Financeiro').lower()
+
+        # Cálculo da data de expiração baseado no plano
+        days = 30 # Default
+        if 'anual' in plan_name:
+            days = 365
+        elif 'semestral' in plan_name:
+            days = 180
+        elif 'trimestral' in plan_name:
+            days = 90
+        elif 'mensal' in plan_name:
+            days = 30
+            
+        expire_date = timezone.now() + timedelta(days=days)
 
         Subscription.objects.update_or_create(
             user=user, 
             defaults={
                 'kirvano_subscription_id': sub_id, 
-                'plan_name': plan_name, 
+                'plan_name': plan_name.capitalize(), 
                 'status': 'active', 
-                'start_date': timezone.now()
+                'start_date': timezone.now(),
+                'expire_date': expire_date
             }
         )
         
@@ -157,7 +172,8 @@ def evolution_webhook(request):
         
         body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', 'Olá')
 
-        if not subscription or subscription.status != 'active':
+        # Verifica se a assinatura está ativa (considerando status e data de expiração)
+        if not subscription or not subscription.is_active:
             response_text = agent.process_inactive_user(body, user)
             
             from whatsapp_messages.models import Message
