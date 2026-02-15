@@ -26,10 +26,11 @@ REGRAS:
 2. **date**: Data no formato YYYY-MM-DD. 
    - "Amanhã" = {today_plus_1}.
    - "Hoje" = {today}.
+   - "Segunda", "Terça" = Calcule a data mais próxima.
 3. **time**: Hora no formato HH:MM. 
-   - Se disser "lá pelas 4", assuma 16:00 (se tarde) ou 04:00.
-   - Se não tiver certeza da hora, use "09:00" ou a mais provável.
-   - Tente ao máximo preencher, não deixe null se puder chutar com confiança.
+   - Se disser "lá pelas 4", assuma 16:00.
+   - Se não disser nada, use "09:00" (PADRÃO).
+   - O campo time NUNCA deve ser null. Se não souber, use 09:00.
 
 ATENÇÃO: IGNORAR conversas antigas. FOCO TOTAL nesta mensagem.
 
@@ -37,8 +38,8 @@ Retorne JSON VÁLIDO:
 {{
   "title": "título ou null",
   "date": "YYYY-MM-DD ou null",
-  "time": "HH:MM ou null",
-  "missing_info": true ou false
+  "time": "HH:MM",
+  "missing_info": false
 }}
 """
 
