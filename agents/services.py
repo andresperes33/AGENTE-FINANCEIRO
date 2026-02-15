@@ -82,22 +82,31 @@ class AIAgentService:
             print(f"Erro Memória: {e}")
             return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
 
-    def process_image(self, message_id, user):
+    def process_image(self, message_id, user, base64_data=None):
         """Analisa imagem de comprovante usando Vision do GPT-4o-mini"""
         if not self.llm or not self.api_key:
             return "A inteligência visual precisa de uma chave OpenAI ativa."
 
         try:
-            # 1. Baixar binário da imagem via Evolution API (GET)
-            url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
-            headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
-            
-            res_evo = requests.get(url_evo, headers=headers_evo)
-            if res_evo.status_code != 200:
-                print(f"Erro ao baixar binário da imagem: {res_evo.status_code} - {res_evo.text}")
-                return "Não consegui baixar a imagem para analisar."
-            
-            base64_image = base64.b64encode(res_evo.content).decode('utf-8')
+            # 1. Obter binário da imagem
+            if base64_data:
+                base64_image = base64_data
+            else:
+                # Tentar baixar via Evolution API (GET /chat/fetchMediaBinary/...)
+                url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/fetchMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
+                headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
+                
+                res_evo = requests.get(url_evo, headers=headers_evo)
+                if res_evo.status_code != 200:
+                    # Tentar fallback para getMediaBinary se fetch falhar (compatibilidade)
+                    url_fallback = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
+                    res_evo = requests.get(url_fallback, headers=headers_evo)
+                    
+                if res_evo.status_code != 200:
+                    print(f"Erro ao baixar binário da imagem: {res_evo.status_code} - {res_evo.text}")
+                    return "Não consegui baixar a imagem para analisar. Verifique se a Evolution API está configurada corretamente."
+                
+                base64_image = base64.b64encode(res_evo.content).decode('utf-8')
 
             # 2. Chamar OpenAI Vision
             payload = {
@@ -136,22 +145,31 @@ class AIAgentService:
             return response
         except Exception as e: return f"Erro ao analisar o comprovante: {str(e)}"
 
-    def process_audio(self, message_id, user):
+    def process_audio(self, message_id, user, base64_data=None):
         """Transcreve áudio com Whisper e processa o texto"""
         if not self.api_key:
             return "A transcrição de áudio precisa de uma chave OpenAI ativa."
 
         try:
-            # 1. Baixar binário do áudio via Evolution API (GET)
-            url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
-            headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
-            
-            res_evo = requests.get(url_evo, headers=headers_evo)
-            if res_evo.status_code != 200:
-                print(f"Erro ao baixar binário do áudio: {res_evo.status_code} - {res_evo.text}")
-                return "Não consegui baixar o áudio para transcrever."
-            
-            audio_data = res_evo.content
+            # 1. Obter binário do áudio
+            if base64_data:
+                audio_data = base64.b64decode(base64_data)
+            else:
+                # Tentar baixar via Evolution API (GET /chat/fetchMediaBinary/...)
+                url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/fetchMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
+                headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
+                
+                res_evo = requests.get(url_evo, headers=headers_evo)
+                if res_evo.status_code != 200:
+                    # Fallback para getMediaBinary
+                    url_fallback = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
+                    res_evo = requests.get(url_fallback, headers=headers_evo)
+
+                if res_evo.status_code != 200:
+                    print(f"Erro ao baixar binário do áudio: {res_evo.status_code} - {res_evo.text}")
+                    return "Não consegui baixar o áudio para transcrever. Verifique se a Evolution API está configurada corretamente."
+                
+                audio_data = res_evo.content
 
             # 2. Criar arquivo temporário para enviar para a OpenAI
             with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_audio:
