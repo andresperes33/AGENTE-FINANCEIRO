@@ -36,6 +36,7 @@ class Subscription(models.Model):
     
     start_date = models.DateTimeField('Data de Início', null=True, blank=True)
     expire_date = models.DateTimeField('Data de Expiração', null=True, blank=True)
+    notified_expiration_warning = models.BooleanField('Notificado sobre Expiração', default=False)
     
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Atualizado em', auto_now=True)

@@ -188,6 +188,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'subscriptions.tasks.check_expired_subscriptions',
         'schedule': 3600.0, # 1 hora
     },
+    'send-expiration-warnings-every-hour': {
+        'task': 'subscriptions.tasks.send_expiration_warnings',
+        'schedule': 3600.0, # 1 hora
+    },
 }
 
 # Login/Logout URLs
