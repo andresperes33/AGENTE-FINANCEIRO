@@ -65,19 +65,16 @@ def generate_random_password(length=8):
 
 
 def process_kirvano_event(payload, event_type):
-    # Aceita os tipos de evento da Kirvano (compra aprovada ou recorrência)
-    if event_type in ['purchase.approved', 'RECURRING', 'SALE_APPROVED']:
+    # 1. TRATAMENTO DE ATIVAÇÃO E RENOVAÇÃO
+    if event_type in ['purchase.approved', 'RECURRING', 'SALE_APPROVED', 'SUBSCRIPTION_RENEWED']:
         customer_data = payload.get('customer', {})
-        # O payload real tem o plano dentro de 'plan'
         plan_data = payload.get('plan', {})
         
         email = customer_data.get('email')
-        # Tenta pegar 'phone' ou 'phone_number' do payload real
         phone = customer_data.get('phone') or customer_data.get('phone_number')
         name = customer_data.get('name') or 'Cliente'
         
-        if not email: 
-            email = f"teste_{random.randint(100,999)}@teste.com"
+        if not email: return
             
         user = User.objects.filter(email=email).first()
         temp_password = None
@@ -93,7 +90,6 @@ def process_kirvano_event(payload, event_type):
             user.must_change_password = True
             user.save()
             
-        # Pega o ID da venda/assinatura e o nome do plano de diversas formas possíveis
         sub_id = payload.get('sale_id') or payload.get('id') or payload.get('subscription', {}).get('id') or 'TEST_ID'
         plan_name = plan_data.get('name') or payload.get('plan_name') or 'Assistente Financeiro'
 
@@ -107,23 +103,33 @@ def process_kirvano_event(payload, event_type):
             }
         )
         
-        if phone:
-            print(f"Tentando enviar Zap de boas-vindas para: {phone}")
-            evo = EvolutionService()
-            msg = f"🚀 *Pagamento Confirmado!* \n\n"
-            msg += f"Olá {user.nome}, seja muito bem-vindo(a) ao Agente Financeiro! \n\n"
-            msg += "A partir de agora, eu sou seu novo assistente pessoal. Você já pode me mandar áudios, fotos de comprovantes ou me pedir para agendar compromissos. \n\n"
-            
-            if temp_password:
-                msg += "Aqui estão seus dados de acesso ao painel web: \n"
-                msg += f"🔗 Site: https://agentefinanceiro-github-desktop.m9hodh.easypanel.host/ \n"
-                msg += f"📧 Email: {email}\n"
-                msg += f"🔑 Senha: *{temp_password}* \n\n"
-                msg += "Guarde esses dados com carinho! Como posso te ajudar hoje?"
-            else:
-                msg += "Como posso te ajudar a organizar seu consultório hoje?"
-                
-            evo.send_message(phone, msg)
+        # Enviar boas-vindas apenas se for uma nova conta (tem senha temporária)
+        if temp_password and phone:
+            send_welcome_message(user, phone, email, temp_password)
+
+    # 2. TRATAMENTO DE CANCELAMENTO OU ATRASO
+    elif event_type in ['SUBSCRIPTION_CANCELLED', 'SUBSCRIPTION_OVERDUE', 'REFUND']:
+        customer_data = payload.get('customer', {})
+        email = customer_data.get('email')
+        
+        if email:
+            user = User.objects.filter(email=email).first()
+            if user and hasattr(user, 'subscription'):
+                user.subscription.status = 'canceled'
+                user.subscription.save()
+                print(f"Acesso bloqueado para o usuário: {email}")
+
+def send_welcome_message(user, phone, email, temp_password):
+    evo = EvolutionService()
+    msg = f"🚀 *Pagamento Confirmado!* \n\n"
+    msg += f"Olá {user.nome}, seja muito bem-vindo(a) ao Agente Financeiro! \n\n"
+    msg += "A partir de agora eu sou seu assistente pessoal. \n\n"
+    msg += "Aqui estão seus dados de acesso ao painel web: \n"
+    msg += f"🔗 Site: https://agentefinanceiro-github-desktop.m9hodh.easypanel.host/ \n"
+    msg += f"📧 Email: {email}\n"
+    msg += f"🔑 Senha: *{temp_password}* \n\n"
+    msg += "Como posso te ajudar hoje?"
+    evo.send_message(phone, msg)
 
 
 @csrf_exempt
