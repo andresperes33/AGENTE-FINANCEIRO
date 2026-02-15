@@ -157,6 +157,10 @@ def evolution_webhook(request):
             return JsonResponse({'status': 'ignored'}, status=200)
             
         data = payload.get('data', {})
+        # Evolution v2 às vezes envia data como uma lista
+        if isinstance(data, list):
+            data = data[0] if data else {}
+
         if data.get('key', {}).get('fromMe'): 
             return JsonResponse({'status': 'ignored_self'}, status=200)
 

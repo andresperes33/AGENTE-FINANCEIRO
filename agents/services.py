@@ -92,21 +92,12 @@ class AIAgentService:
             if base64_data:
                 base64_image = base64_data
             else:
-                # Tentar baixar via Evolution API (GET /chat/fetchMediaBinary/...)
-                url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/fetchMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
-                headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
-                
-                res_evo = requests.get(url_evo, headers=headers_evo)
-                if res_evo.status_code != 200:
-                    # Tentar fallback para getMediaBinary se fetch falhar (compatibilidade)
-                    url_fallback = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
-                    res_evo = requests.get(url_fallback, headers=headers_evo)
-                    
-                if res_evo.status_code != 200:
-                    print(f"Erro ao baixar binário da imagem: {res_evo.status_code} - {res_evo.text}")
+                # Tentar baixar via Evolution API (várias tentativas/endpoints)
+                media_bytes = self._get_evolution_media(message_id)
+                if not media_bytes:
                     return "Não consegui baixar a imagem para analisar. Verifique se a Evolution API está configurada corretamente."
                 
-                base64_image = base64.b64encode(res_evo.content).decode('utf-8')
+                base64_image = base64.b64encode(media_bytes).decode('utf-8')
 
             # 2. Chamar OpenAI Vision
             payload = {
@@ -155,21 +146,10 @@ class AIAgentService:
             if base64_data:
                 audio_data = base64.b64decode(base64_data)
             else:
-                # Tentar baixar via Evolution API (GET /chat/fetchMediaBinary/...)
-                url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/fetchMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
-                headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
+                audio_data = self._get_evolution_media(message_id)
                 
-                res_evo = requests.get(url_evo, headers=headers_evo)
-                if res_evo.status_code != 200:
-                    # Fallback para getMediaBinary
-                    url_fallback = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{message_id}"
-                    res_evo = requests.get(url_fallback, headers=headers_evo)
-
-                if res_evo.status_code != 200:
-                    print(f"Erro ao baixar binário do áudio: {res_evo.status_code} - {res_evo.text}")
+                if not audio_data:
                     return "Não consegui baixar o áudio para transcrever. Verifique se a Evolution API está configurada corretamente."
-                
-                audio_data = res_evo.content
 
             # 2. Criar arquivo temporário para enviar para a OpenAI
             with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_audio:
@@ -197,6 +177,47 @@ class AIAgentService:
 
         except Exception as e:
             return f"Erro ao processar áudio: {str(e)}"
+
+    def _get_evolution_media(self, message_id):
+        """Tenta baixar a mídia por diversos endpoints da Evolution API (v1 e v2)"""
+        headers = {"apikey": settings.EVOLUTION_API_KEY}
+        instance = settings.EVOLUTION_INSTANCE
+        base_url = settings.EVOLUTION_BASE_URL
+
+        # 1. Tentar POST /chat/getBase64FromMediaMessage/{instance} (Recomendado para Evolution v2)
+        try:
+            url_base64 = f"{base_url}/chat/getBase64FromMediaMessage/{instance}"
+            payload = {"messageId": message_id}
+            res = requests.post(url_base64, headers=headers, json=payload, timeout=10)
+            if res.status_code == 200 or res.status_code == 201:
+                data = res.json()
+                base64_str = data.get('base64') or data.get('response', {}).get('base64')
+                if base64_str:
+                    # Remover cabeçalho data:image/...;base64, se houver
+                    if ',' in base64_str:
+                        base64_str = base64_str.split(',')[1]
+                    return base64.b64decode(base64_str)
+        except Exception as e:
+            print(f"Erro no endpoint getBase64: {e}")
+
+        # 2. Tentar GET /chat/fetchMediaBinary/{instance}/{messageId} (Padrão v2)
+        try:
+            url_fetch = f"{base_url}/chat/fetchMediaBinary/{instance}/{message_id}"
+            res = requests.get(url_fetch, headers=headers, timeout=10)
+            if res.status_code == 200:
+                return res.content
+        except: pass
+
+        # 3. Tentar GET /chat/getMediaBinary/{instance}/{messageId} (Padrão v1)
+        try:
+            url_get = f"{base_url}/chat/getMediaBinary/{instance}/{message_id}"
+            res = requests.get(url_get, headers=headers, timeout=10)
+            if res.status_code == 200:
+                return res.content
+        except: pass
+
+        print(f"Falha total ao baixar mídia {message_id} após várias tentativas.")
+        return None
 
     def _route_intent(self, text):
         lower_text = text.lower()
