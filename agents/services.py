@@ -168,8 +168,10 @@ class AIAgentService:
                 return "Erro ao transcrever o áudio com Whisper."
             
             transcription = res.json().get("text", "")
-            if not transcription:
-                return "O áudio parece estar vazio ou não foi compreendido."
+            print(f"🎤 [DEBUG] Transcrição do Áudio: '{transcription}'") # LOG PARA DEBUG
+
+            if not transcription or len(transcription.strip()) < 2:
+                return "O áudio parece estar mudo ou muito curto. Tente novamente."
 
             # 4. Processar o texto transcrito como se fosse uma mensagem normal
             response_text = self.process_message(transcription, user)
