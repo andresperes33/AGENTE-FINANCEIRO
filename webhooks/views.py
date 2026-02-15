@@ -192,11 +192,11 @@ def evolution_webhook(request):
         response_text = ""
         
         if 'imageMessage' in message_data:
-            message_key = data.get('key', {})
-            response_text = agent.process_image(message_key, user)
+            message_id = data.get('key', {}).get('id')
+            response_text = agent.process_image(message_id, user)
         elif 'audioMessage' in message_data:
-            message_key = data.get('key', {})
-            response_text = agent.process_audio(message_key, user)
+            message_id = data.get('key', {}).get('id')
+            response_text = agent.process_audio(message_id, user)
         else:
             body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', '')
             if body:
