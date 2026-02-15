@@ -14,7 +14,7 @@ import tempfile
 # Tentar importar LangChain, se falhar usar Mock
 try:
     from langchain_openai import ChatOpenAI
-    from langchain.prompts import PromptTemplate
+    from langchain.prompts import PromptTemplate, ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
     from langchain_core.output_parsers import JsonOutputParser
     from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT, ACTIVE_GENERAL_PROMPT, DELETE_PROMPT, REPORT_PARAMS_PROMPT
     HAS_LANGCHAIN = True
