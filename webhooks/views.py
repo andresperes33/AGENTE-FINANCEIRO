@@ -192,11 +192,11 @@ def evolution_webhook(request):
         response_text = ""
         
         if 'imageMessage' in message_data:
-            file_url = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{data.get('key', {}).get('id')}"
-            response_text = agent.process_image(file_url, user)
+            message_key = data.get('key', {})
+            response_text = agent.process_image(message_key, user)
         elif 'audioMessage' in message_data:
-            file_url = f"{settings.EVOLUTION_BASE_URL}/chat/getMediaBinary/{settings.EVOLUTION_INSTANCE}/{data.get('key', {}).get('id')}"
-            response_text = agent.process_audio(file_url, user)
+            message_key = data.get('key', {})
+            response_text = agent.process_audio(message_key, user)
         else:
             body = message_data.get('conversation') or message_data.get('extendedTextMessage', {}).get('text', '')
             if body:

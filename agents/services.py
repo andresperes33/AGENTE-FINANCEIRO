@@ -82,32 +82,47 @@ class AIAgentService:
             print(f"Erro Memória: {e}")
             return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
 
-    def process_image(self, image_url, user):
+    def process_image(self, message_key, user):
         """Analisa imagem de comprovante usando Vision do GPT-4o-mini"""
         if not self.llm or not self.api_key:
             return "A inteligência visual precisa de uma chave OpenAI ativa."
 
         try:
-            headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
-            response = requests.get(image_url, headers=headers_evo)
-            if response.status_code != 200:
-                print(f"Erro ao baixar imagem: {response.status_code} - {response.text}")
+            # 1. Obter Base64 da imagem via Evolution API (mais robusto)
+            url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/getBase64FromMedia/{settings.EVOLUTION_INSTANCE}"
+            headers_evo = {"apikey": settings.EVOLUTION_API_KEY, "Content-Type": "application/json"}
+            payload_evo = {"key": message_key}
+            
+            res_evo = requests.post(url_evo, headers=headers_evo, json=payload_evo)
+            if res_evo.status_code != 200:
+                print(f"Erro ao obter base64 da imagem: {res_evo.status_code} - {res_evo.text}")
                 return "Não consegui baixar a imagem para analisar."
             
-            base64_image = base64.b64encode(response.content).decode('utf-8')
+            base64_image = res_evo.json().get('base64')
+            if not base64_image:
+                return "Imagem não encontrada ou formato inválido."
+            
+            # Limpar prefixo data:image/... se existir
+            if "," in base64_image:
+                base64_image = base64_image.split(",")[1]
 
-            headers = {
-                "Content-Type": "application/json", 
-                "Authorization": f"Bearer {self.api_key}",
-                "apikey": settings.EVOLUTION_API_KEY
-            }
+            # 2. Chamar OpenAI Vision
             payload = {
                 "model": "gpt-4o-mini",
-                "messages": [{"role": "user", "content": [{"type": "text", "text": VISION_PROMPT}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
+                "messages": [
+                    {
+                        "role": "user", 
+                        "content": [
+                            {"type": "text", "text": VISION_PROMPT}, 
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                        ]
+                    }
+                ],
                 "max_tokens": 500
             }
 
-            res = requests.post("https://api.openai.com/v1/chat/completions", headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}, json=payload)
+            headers_oa = {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
+            res = requests.post("https://api.openai.com/v1/chat/completions", headers=headers_oa, json=payload)
             result = res.json()
             content = result['choices'][0]['message']['content'].replace("```json", "").replace("```", "").strip()
             data = json.loads(content)
@@ -128,22 +143,34 @@ class AIAgentService:
             return response
         except Exception as e: return f"Erro ao analisar o comprovante: {str(e)}"
 
-    def process_audio(self, audio_url, user):
+    def process_audio(self, message_key, user):
         """Transcreve áudio com Whisper e processa o texto"""
         if not self.api_key:
             return "A transcrição de áudio precisa de uma chave OpenAI ativa."
 
         try:
-            # 1. Baixar o arquivo de áudio da Evolution
-            headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
-            response = requests.get(audio_url, headers=headers_evo)
-            if response.status_code != 200:
-                print(f"Erro ao baixar áudio: {response.status_code} - {response.text}")
+            # 1. Obter Base64 do áudio via Evolution API
+            url_evo = f"{settings.EVOLUTION_BASE_URL}/chat/getBase64FromMedia/{settings.EVOLUTION_INSTANCE}"
+            headers_evo = {"apikey": settings.EVOLUTION_API_KEY, "Content-Type": "application/json"}
+            payload_evo = {"key": message_key}
+            
+            res_evo = requests.post(url_evo, headers=headers_evo, json=payload_evo)
+            if res_evo.status_code != 200:
+                print(f"Erro ao obter base64 do áudio: {res_evo.status_code} - {res_evo.text}")
                 return "Não consegui baixar o áudio para transcrever."
+            
+            base64_audio = res_evo.json().get('base64')
+            if not base64_audio:
+                return "Áudio não encontrado ou formato inválido."
+
+            if "," in base64_audio:
+                base64_audio = base64_audio.split(",")[1]
+
+            audio_data = base64.b64decode(base64_audio)
 
             # 2. Criar arquivo temporário para enviar para a OpenAI
             with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_audio:
-                temp_audio.write(response.content)
+                temp_audio.write(audio_data)
                 temp_path = temp_audio.name
 
             # 3. Chamar Whisper API
