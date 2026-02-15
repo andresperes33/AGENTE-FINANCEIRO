@@ -16,21 +16,29 @@ Intenção:
 """
 
 SCHEDULE_PROMPT = """
-Sua tarefa é extrair os dados de um compromisso da mensagem do usuário.
+Sua tarefa é extrair os dados de um compromisso da mensagem do usuário (linguagem natural, dia-a-dia).
 
-REGRAS CRÍTICAS:
-1. Se o usuário NÃO disse O QUE é o compromisso (título) OU NÃO disse QUANDO (data/hora), você deve retornar o campo "missing_info": true. 
-2. NÃO CHUTE dados que não existem. Se ele disse "queria marcar um compromisso" sem dizer o quê ou quando, retorne "missing_info": true.
-3. title: O objeto do compromisso.
-4. date: YYYY-MM-DD. Considere HOJE = {today}.
-5. time: HH:MM.
+REGRAS DE EXTRAÇÃO:
+1. **title**: O que é o compromisso (ex: "Médico", "Reunião", "Dentista", "Aniversário"). 
+2. **date**: Data no formato YYYY-MM-DD.
+   - HOJE é: {today}
+   - AMANHÃ é: {today_plus_1}
+   - Se o usuário falar um dia e mês (ex: "25 de fevereiro"), use o ano atual ({today} logo o ano é 2026).
+3. **time**: Hora no formato HH:MM (24h). 
+   - Se falar "14 horas", use "14:00". 
+   - Se falar "2 da tarde", use "14:00".
+   - Se não houver hora nenhuma, use "09:00".
+
+**VALIDAÇÃO CRÍTICA**:
+- Só retorne `missing_info: true` se a mensagem for VAGA (ex: "quero marcar algo", "agenda aí").
+- Se houver uma data (mesmo que por extenso como "25 de fevereiro") e um assunto (como "médico"), você DEVE extrair e colocar `missing_info: false`.
 
 Retorne APENAS o JSON:
 {{
-  "title": "..." ou null,
-  "date": "..." ou null,
-  "time": "..." ou null,
-  "missing_info": true/false
+  "title": "título extraído",
+  "date": "YYYY-MM-DD",
+  "time": "HH:MM",
+  "missing_info": false
 }}
 """
 
