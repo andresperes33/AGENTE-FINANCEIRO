@@ -184,6 +184,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'agenda.tasks.check_appointment_notifications',
         'schedule': 60.0, # segundos
     },
+    'check-subscriptions-every-hour': {
+        'task': 'subscriptions.tasks.check_expired_subscriptions',
+        'schedule': 3600.0, # 1 hora
+    },
 }
 
 # Login/Logout URLs
