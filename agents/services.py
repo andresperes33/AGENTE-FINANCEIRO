@@ -16,7 +16,7 @@ try:
     from langchain_openai import ChatOpenAI
     from langchain.prompts import PromptTemplate
     from langchain_core.output_parsers import JsonOutputParser
-    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT
+    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT, ACTIVE_GENERAL_PROMPT
     HAS_LANGCHAIN = True
 except ImportError:
     HAS_LANGCHAIN = False
@@ -50,7 +50,7 @@ class AIAgentService:
         elif intent == "SCHEDULE":
             return self._handle_schedule(text, user)
         else:
-            return "Desculpe, não entendi. Tente algo como 'Gastei 50 no almoço' ou mande um áudio/foto!"
+            return self._handle_general_chat(text, user)
 
     def gen_notification_text(self, prompt_text):
         """Gera apenas o texto da notificação sem processar intenções"""
@@ -249,3 +249,22 @@ class AIAgentService:
             return f" ✅ *Compromisso Agendado!* \n📌 {appt.title}\n📅 {dt_obj.strftime('%d/%m/%Y às %H:%M')}\nID: *{appt.identifier}*"
         except Exception as e:
             return f"Erro ao agendar: {str(e)}"
+    def _handle_general_chat(self, text, user):
+        """Lida com conversas gerais (oi, tudo bem, etc) para usuários ativos"""
+        if not self.llm:
+            return "Oi! Como posso te ajudar hoje? Posso anotar seus gastos, agendar compromissos ou gerar relatórios. É só me chamar!"
+            
+        try:
+            # Buscar histórico das últimas 5 mensagens
+            history_msgs = Message.objects.filter(user=user).order_by('-created_at')[:5]
+            history_text = ""
+            for msg in reversed(history_msgs):
+                history_text += f"Usuário: {msg.raw_content}\nAgente: {msg.response_sent}\n"
+
+            prompt = PromptTemplate.from_template(ACTIVE_GENERAL_PROMPT)
+            chain = prompt | self.llm
+            response = chain.invoke({"text": text, "history": history_text or "Início da conversa."})
+            return response.content
+        except Exception as e:
+            print(f"Erro Chat Geral: {e}")
+            return "Oi! Estou pronto para te ajudar. Quer anotar um gasto, ver seu saldo ou agendar algo?"
