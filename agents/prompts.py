@@ -22,22 +22,22 @@ HOJE É: {today}
 AMANHÃ É: {today_plus_1}
 
 REGRAS:
-1. **title**: O que é o compromisso. (Ex: Médico, Reunião, Mercado). Apenas da mensagem atual.
+1. **title**: O que é o compromisso. (Ex: Médico, Reunião, Mercado). 
+   - Se não disser, use "Compromisso".
 2. **date**: Data no formato YYYY-MM-DD. 
    - "Amanhã" = {today_plus_1}.
    - "Hoje" = {today}.
-   - "Segunda", "Terça" = Calcule a data mais próxima.
+   - Se não tiver data, use {today}.
 3. **time**: Hora no formato HH:MM. 
    - Se disser "lá pelas 4", assuma 16:00.
-   - Se não disser nada, use "09:00" (PADRÃO).
-   - O campo time NUNCA deve ser null. Se não souber, use 09:00.
+   - Se não disser nada, use "09:00".
 
 ATENÇÃO: IGNORAR conversas antigas. FOCO TOTAL nesta mensagem.
 
-Retorne JSON VÁLIDO:
+Retorne JSON VÁLIDO (sem nulls, use padrões):
 {{
-  "title": "título ou null",
-  "date": "YYYY-MM-DD ou null",
+  "title": "título ou Compromisso",
+  "date": "YYYY-MM-DD",
   "time": "HH:MM",
   "missing_info": false
 }}
