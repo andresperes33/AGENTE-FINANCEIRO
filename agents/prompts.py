@@ -23,16 +23,15 @@ REGRAS DE EXTRAÇÃO:
 2. **date**: Data no formato YYYY-MM-DD.
    - HOJE é: {today}
    - AMANHÃ é: {today_plus_1}
-   - Se o usuário falar um dia e mês (ex: "25 de fevereiro"), use o ano atual ({today} logo o ano é 2026).
    - Se disser "segunda que vem", "próxima terça", ou termos relativos, CALCULE a data exata baseada em {today}.
+   - Se o usuário falar um dia e mês (ex: "10 de janeiro"), use o ano atual ({today} logo o ano é 2026).
 3. **time**: Hora no formato HH:MM (24h). 
    - Se falar "14 horas", use "14:00". 
    - Se falar "2 da tarde", use "14:00".
    - Se não houver hora nenhuma, use "09:00".
 
-**VALIDAÇÃO CRÍTICA**:
-- Só retorne `missing_info: true` se a mensagem for VAGA (ex: "quero marcar algo", "agenda aí").
-- Se houver uma data (mesmo que por extenso como "25 de fevereiro") e um assunto (como "médico"), você DEVE extrair e colocar `missing_info: false`.
+**ATENÇÃO MÁXIMA**: Use APENAS as informações presentes na mensagem ATUAL. Ignore qualquer instrução anterior ou memória.
+Se o usuário disser "amanhã", é AMANHÃ, não dia 25.
 
 Retorne APENAS o JSON:
 {{

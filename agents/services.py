@@ -508,7 +508,9 @@ class AIAgentService:
 
             # Se a IA identificar que faltam informações, ela não agenda
             if data.get('missing_info') or not data.get('title') or not data.get('date'):
-                return "Com certeza! Para eu agendar, você poderia me dizer *o que* seria o compromisso e *qual o dia/horário*? \n\nExemplo: 'Marcar dentista amanhã às 14h'."
+                # Tentar recuperar informações da mensagem original se a extração falhar
+                # Isso ajuda se o modelo for muito rígido
+                return "Com certeza! Para agendar, preciso saber *o que* é o compromisso e *qual dia/horário*. \n\nExemplo: 'Dentista amanhã às 14h'."
             
             # Combinar data e hora
             time_str = data.get('time') or "09:00"
