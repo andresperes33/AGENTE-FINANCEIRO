@@ -110,7 +110,16 @@ class AIAgentService:
 
             amount = float(str(data.get('amount', 0)).replace(',', '.'))
             tx = Transaction.objects.create(user=user, description=data.get('description', 'Comprovante'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.now().date())
-            return f" *Comprovante Lido!* \n {tx.description}\n Valor: *R$ {amount:.2f}*\n ID: *{tx.identifier}*"
+            
+            response = f"✅ *Novo Lançamento Realizado! (via Foto)* \n\n"
+            response += f"🆔 *ID:* {tx.identifier}\n"
+            response += f"💰 *Valor:* R$ {amount:.2f}\n"
+            response += f"🏷️ *Tipo:* {'Receita' if tx.type == 'income' else 'Despesa'}\n"
+            response += f"📄 *Descrição:* {tx.description}\n"
+            response += f"🏷️ *Categoria:* {tx.category}\n"
+            response += f"📅 *Data:* {tx.transaction_date.strftime('%d/%m/%Y')}\n\n"
+            response += f"❌ Para excluir ou editar, envie o ID: *{tx.identifier}*"
+            return response
         except Exception as e: return f"Erro ao analisar o comprovante: {str(e)}"
 
     def process_audio(self, audio_url, user):
@@ -175,7 +184,16 @@ class AIAgentService:
             data = chain.invoke({"text": text})
             amount = float(str(data.get('amount', 0)).replace(',', '.'))
             tx = Transaction.objects.create(user=user, description=data.get('description', 'Transação'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.now().date())
-            return f" Lançamento Realizado! ID: *{tx.identifier}* - R$ {amount:.2f}"
+            
+            response = f"✅ *Novo Lançamento Realizado!* \n\n"
+            response += f"🆔 *ID:* {tx.identifier}\n"
+            response += f"💰 *Valor:* R$ {amount:.2f}\n"
+            response += f"🏷️ *Tipo:* {'Receita' if tx.type == 'income' else 'Despesa'}\n"
+            response += f"📄 *Descrição:* {tx.description}\n"
+            response += f"🏷️ *Categoria:* {tx.category}\n"
+            response += f"📅 *Data:* {tx.transaction_date.strftime('%d/%m/%Y')}\n\n"
+            response += f"❌ Para excluir ou editar, envie o ID: *{tx.identifier}*"
+            return response
         except: return "Erro ao processar lançamento."
 
     def _handle_edit(self, text, user):
