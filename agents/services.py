@@ -82,7 +82,7 @@ class AIAgentService:
             print(f"Erro Memória: {e}")
             return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
 
-    def process_image(self, message_id, user, base64_data=None):
+    def process_image(self, message_id, user, base64_data=None, message_obj=None):
         """Analisa imagem de comprovante usando Vision do GPT-4o-mini"""
         if not self.llm or not self.api_key:
             return "A inteligência visual precisa de uma chave OpenAI ativa."
@@ -93,7 +93,7 @@ class AIAgentService:
                 base64_image = base64_data
             else:
                 # Tentar baixar via Evolution API (várias tentativas/endpoints)
-                media_bytes = self._get_evolution_media(message_id)
+                media_bytes = self._get_evolution_media(message_id, message_obj)
                 if not media_bytes:
                     return "Não consegui baixar a imagem para analisar. Verifique se a Evolution API está configurada corretamente."
                 
@@ -136,7 +136,7 @@ class AIAgentService:
             return response
         except Exception as e: return f"Erro ao analisar o comprovante: {str(e)}"
 
-    def process_audio(self, message_id, user, base64_data=None):
+    def process_audio(self, message_id, user, base64_data=None, message_obj=None):
         """Transcreve áudio com Whisper e processa o texto"""
         if not self.api_key:
             return "A transcrição de áudio precisa de uma chave OpenAI ativa."
@@ -146,7 +146,7 @@ class AIAgentService:
             if base64_data:
                 audio_data = base64.b64decode(base64_data)
             else:
-                audio_data = self._get_evolution_media(message_id)
+                audio_data = self._get_evolution_media(message_id, message_obj)
                 
                 if not audio_data:
                     return "Não consegui baixar o áudio para transcrever. Verifique se a Evolution API está configurada corretamente."
@@ -178,7 +178,7 @@ class AIAgentService:
         except Exception as e:
             return f"Erro ao processar áudio: {str(e)}"
 
-    def _get_evolution_media(self, message_id):
+    def _get_evolution_media(self, message_id, message_obj=None):
         """Tenta baixar a mídia por diversos endpoints da Evolution API (v1 e v2)"""
         headers = {"apikey": settings.EVOLUTION_API_KEY}
         instance = settings.EVOLUTION_INSTANCE
@@ -187,11 +187,21 @@ class AIAgentService:
         # 1. Tentar POST /chat/getBase64FromMediaMessage/{instance} (Recomendado para Evolution v2)
         try:
             url_base64 = f"{base_url}/chat/getBase64FromMediaMessage/{instance}"
-            payload = {"messageId": message_id}
+            # O endpoint v2 geralmente espera o objeto de mensagem completo ou o messageId
+            if message_obj:
+                # Payload sugerido para v2 quando se tem o objeto do webhook
+                payload = {"message": message_obj}
+            else:
+                payload = {"messageId": message_id}
+                
             res = requests.post(url_base64, headers=headers, json=payload, timeout=10)
-            if res.status_code == 200 or res.status_code == 201:
+            if res.status_code in [200, 201]:
                 data = res.json()
-                base64_str = data.get('base64') or data.get('response', {}).get('base64')
+                # A resposta pode vir em diferentes formatos dependendo da versão
+                base64_str = None
+                if isinstance(data, dict):
+                    base64_str = data.get('base64') or data.get('response', {}).get('base64')
+                
                 if base64_str:
                     # Remover cabeçalho data:image/...;base64, se houver
                     if ',' in base64_str:
