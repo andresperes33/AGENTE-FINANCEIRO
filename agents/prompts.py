@@ -16,26 +16,24 @@ Intenção:
 """
 
 SCHEDULE_PROMPT = """
-Sua tarefa é extrair os dados de um compromisso da mensagem do usuário (linguagem natural, dia-a-dia).
+Sua tarefa é extrair os dados de um compromisso da mensagem do usuário (linguagem natural).
 
-REGRAS DE EXTRAÇÃO:
-1. **title**: O que é o compromisso (ex: "Médico", "Reunião", "Dentista", "Aniversário"). 
-2. **date**: Data no formato YYYY-MM-DD.
-   - HOJE é: {today}
-   - AMANHÃ é: {today_plus_1}
-   - Se disser "segunda que vem", "próxima terça", ou termos relativos, CALCULE a data exata baseada em {today}.
-   - Se o usuário falar um dia e mês (ex: "10 de janeiro"), use o ano atual ({today} logo o ano é 2026).
-3. **time**: Hora no formato HH:MM (24h). 
-   - Se falar "14 horas", use "14:00". 
-   - Se falar "2 da tarde", use "14:00".
-   - Se não houver hora nenhuma, use "09:00".
+HOJE É: {today}
+AMANHÃ É: {today_plus_1}
 
-**ATENÇÃO MÁXIMA**: Use APENAS as informações presentes na mensagem ATUAL. Ignore qualquer instrução anterior ou memória.
-Se o usuário disser "amanhã", é AMANHÃ, não dia 25.
+REGRAS:
+1. **title**: O que é o compromisso. (Ex: Médico, Reunião, Mercado).
+2. **date**: Data no formato YYYY-MM-DD. 
+   - Se disser "amanhã", use a data {today_plus_1}.
+   - Se disser "hoje", use {today}.
+   - Se for um dia numérico (ex: "dia 20"), use o mẽs atual ou próximo.
+3. **time**: Hora no formato HH:MM. (Ex: "4 da tarde" = 16:00).
 
-Retorne APENAS o JSON:
+ATENÇÃO: Extraia APENAS o que está nesta mensagem. Ignore conversas anteriores.
+
+Retorne JSON:
 {{
-  "title": "título extraído",
+  "title": "título",
   "date": "YYYY-MM-DD",
   "time": "HH:MM",
   "missing_info": false
