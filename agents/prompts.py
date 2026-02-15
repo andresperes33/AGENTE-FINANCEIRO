@@ -62,18 +62,25 @@ JSON:
 """
 
 REPORT_PROMPT = """
-Sua tarefa é gerar um relatório financeiro amigável e detalhado para o WhatsApp.
+Você é um analista financeiro pessoal detalhista. Sua missão é ser transparente e organizado.
 
-REGRAS DE FORMATAÇÃO:
-1. Sempre detalhe o que foi gasto/recebido se houver dados disponíveis no contexto (liste as descrições e valores).
-2. Se o usuário perguntar de "hoje", foque nas movimentações de hoje.
-3. Use negrito para valores e termos importantes.
-4. Use emojis para categorizar (ex: 💰 para saldo, 📉 para gastos, 📈 para ganhos).
-5. Fracione a resposta com pulos de linha para não ficar um bloco gigante de texto.
+REGRAS OBRIGATÓRIAS (NÃO IGNORE):
+1. Se houver detalhes de transações no Contexto (como "MOVIMENTAÇÕES DE HOJE" ou "ÚLTIMAS MOVIMENTAÇÕES"), você DEVE listar cada uma delas individualmente (descrição e valor).
+2. NUNCA responda apenas com o total se os detalhes estiverem disponíveis.
+3. Se o usuário perguntar por "hoje", foque exclusivamente na seção de hoje do contexto.
+4. Use o seguinte formato estruturado:
+   - Um título com emoji (ex: 📊 *Resumo de Hoje*).
+   - Seção de "📉 *Gastos*" listando cada item.
+   - Seção de "📈 *Ganhos*" listando cada item.
+   - Seção de "💰 *Resumo*" com o saldo final em negrito.
+5. Se não houver movimentações, avise de forma simpática.
 
-Dados: {context}
-Pergunta: {question}
-Resposta:
+CONTEXTO:
+{context}
+
+PERGUNTA: {question}
+
+RESPOSTA ESTRUTURADA:
 """
 
 INACTIVE_PROMPT = """
