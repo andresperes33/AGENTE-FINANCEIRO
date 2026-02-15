@@ -248,20 +248,28 @@ class AIAgentService:
         today_txs = month_txs.filter(transaction_date=today)
         today_income = sum(t.amount for t in today_txs.filter(type='income'))
         today_expense = sum(t.amount for t in today_txs.filter(type='expense'))
+
+        # Lista detalhada de hoje para a I.A. ser específica
+        today_list = "\n".join([
+            f"- {t.description}: R$ {t.amount:.2f} ({'Receita' if t.type == 'income' else 'Despesa'})" 
+            for t in today_txs
+        ])
         
-        # Últimas 10 transações com data para a I.A. se situar
+        context = f"Hoje é dia: {today.strftime('%d/%m/%Y')}\n\n"
+        context += f"--- MOVIMENTAÇÕES DE HOJE ({today.strftime('%d/%m')}) ---\n"
+        context += f"{today_list if today_list else 'Nenhuma movimentação hoje.'}\n"
+        context += f"Total Hoje: Ganhos R$ {today_income:.2f} | Gastos R$ {today_expense:.2f} | Saldo do Dia R$ {today_income - today_expense:.2f}\n\n"
+        
+        context += f"--- RESUMO DO MÊS ATUAL ---\n"
+        context += f"Total Ganhos: R$ {month_income:.2f} | Total Gastos: R$ {month_expense:.2f}\nSaldo Acumulado: R$ {month_income - month_expense:.2f}\n\n"
+        
+        # Últimas 10 transações gerais para contexto amplo
         recent_txs = month_txs.order_by('-transaction_date', '-created_at')[:10]
         tx_list = "\n".join([
             f"- {t.identifier} ({t.transaction_date.strftime('%d/%m')}): {t.description} (R$ {t.amount:.2f} - {'Receita' if t.type == 'income' else 'Despesa'})" 
             for t in recent_txs
         ])
-        
-        context = f"Hoje é dia: {today.strftime('%d/%m/%Y')}\n\n"
-        context += f"--- RESUMO DE HOJE ({today.strftime('%d/%m')}) ---\n"
-        context += f"Ganhos: R$ {today_income:.2f}\nGastos: R$ {today_expense:.2f}\nSaldo do Dia: R$ {today_income - today_expense:.2f}\n\n"
-        context += f"--- RESUMO DO MÊS ATUAL ---\n"
-        context += f"Total Ganhos: R$ {month_income:.2f}\nTotal Gastos: R$ {month_expense:.2f}\nSaldo Acumulado: R$ {month_income - month_expense:.2f}\n\n"
-        context += f"--- ÚLTIMAS MOVIMENTAÇÕES ---\n"
+        context += f"--- ÚLTIMAS MOVIMENTAÇÕES (GERAL DO MÊS) ---\n"
         context += f"{tx_list if tx_list else 'Nenhuma transação este mês.'}"
         
         if not self.llm: 

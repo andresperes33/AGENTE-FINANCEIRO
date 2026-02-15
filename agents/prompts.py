@@ -62,8 +62,14 @@ JSON:
 """
 
 REPORT_PROMPT = """
-Analise os dados financeiros abaixo e responda à pergunta do usuário de forma resumida e útil no WhatsApp.
-Use emojis. Inclua IDs de transações relevantes se necessário.
+Sua tarefa é gerar um relatório financeiro amigável e detalhado para o WhatsApp.
+
+REGRAS DE FORMATAÇÃO:
+1. Sempre detalhe o que foi gasto/recebido se houver dados disponíveis no contexto (liste as descrições e valores).
+2. Se o usuário perguntar de "hoje", foque nas movimentações de hoje.
+3. Use negrito para valores e termos importantes.
+4. Use emojis para categorizar (ex: 💰 para saldo, 📉 para gastos, 📈 para ganhos).
+5. Fracione a resposta com pulos de linha para não ficar um bloco gigante de texto.
 
 Dados: {context}
 Pergunta: {question}
