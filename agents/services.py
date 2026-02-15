@@ -28,7 +28,7 @@ class AIAgentService:
         self.api_key = settings.OPENAI_API_KEY
         if HAS_LANGCHAIN and self.api_key:
             try:
-                self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=self.api_key, temperature=0)
+                self.llm = ChatOpenAI(model="gpt-4.1-mini", api_key=self.api_key, temperature=0)
             except Exception as e:
                 print(f"Erro ao inicializar LLM: {e}")
                 self.llm = None
@@ -101,7 +101,7 @@ class AIAgentService:
 
             # 2. Chamar OpenAI Vision
             payload = {
-                "model": "gpt-4o-mini",
+                "model": "gpt-4.1-mini",
                 "messages": [
                     {
                         "role": "user", 
