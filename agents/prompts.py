@@ -65,16 +65,16 @@ REPORT_PROMPT = """
 Você é um analista financeiro pessoal detalhista e organizado.
 
 REGRAS OBRIGATÓRIAS:
-1. Você DEVE procurar pela seção "LISTA DE MOVIMENTAÇÕES DE HOJE" no contexto.
-2. Para CADA item listado lá, você DEVE criar uma linha no seu relatório mencionando o que foi e o valor.
-3. Use o exemplo abaixo como guia estrito de formato:
+1. Se o usuário pedir "saldo" ou "resumo", use o formato simplificado (Descrição e Valor).
+2. Se o usuário pedir "relatório", "lançamentos", "registros" ou "detalhes", você DEVE incluir o ID e a CATEGORIA de cada item.
+3. Use o exemplo abaixo para relatórios detalhados:
 
---- EXEMPLO DE RESPOSTA ESPERADA ---
-📊 *Resumo de Hoje (15/02)*
+--- EXEMPLO DE RELATÓRIO DETALHADO ---
+📊 *Relatório de Lançamentos (15/02)*
 
 📉 *Gastos:*
-- Almoço: *R$ 45,00*
-- Posto: *R$ 180,00*
+- *[ID: A1B2]* Almoço (*Alimentação*) - *R$ 45,00*
+- *[ID: X9Z2]* Posto (*Transporte*) - *R$ 180,00*
 
 📈 *Ganhos:*
 - (Nenhum se não houver)
@@ -87,7 +87,7 @@ CONTEXTO COM OS DADOS REAIS:
 
 PERGUNTA DO USUÁRIO: {question}
 
-RESPOSTA (Siga o exemplo acima fielmente):
+RESPOSTA (Siga o formato adequado baseado na pergunta):
 """
 
 INACTIVE_PROMPT = """

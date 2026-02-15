@@ -249,9 +249,9 @@ class AIAgentService:
         today_income = sum(t.amount for t in today_txs.filter(type='income'))
         today_expense = sum(t.amount for t in today_txs.filter(type='expense'))
 
-        # Lista detalhada para forçar a I.A. a ver cada item
+        # Lista técnica e detalhada para relatórios completos
         today_list = "\n".join([
-            f"📍 ITEM: {t.description} | VALOR: R$ {t.amount:.2f} | TIPO: {'Receita' if t.type == 'income' else 'Despesa'}" 
+            f"📍 ID: {t.identifier} | ITEM: {t.description} | VALOR: R$ {t.amount:.2f} | CATEGORIA: {t.category} | TIPO: {'Receita' if t.type == 'income' else 'Despesa'}" 
             for t in today_txs
         ])
         
