@@ -24,7 +24,9 @@ class Message(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='messages',
-        verbose_name='Usuário'
+        verbose_name='Usuário',
+        null=True,
+        blank=True
     )
     
     # Dados originais
@@ -72,7 +74,8 @@ class Message(models.Model):
         ]
     
     def __str__(self):
-        return f'{self.user.email} - {self.message_type} - {self.created_at}'
+        user_email = self.user.email if self.user else "Desconhecido"
+        return f'{user_email} - {self.message_type} - {self.created_at}'
     
     def normalize(self, normalized_text):
         """Normaliza a mensagem"""
