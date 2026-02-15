@@ -144,3 +144,15 @@ HISTÓRICO RECENTE:
 MENSAGEM ATUAL DO USUÁRIO: {text}
 Resposta Contextual, Humana e Organizada (fracione com \\n\\n):
 """
+
+DELETE_PROMPT = """
+Extraia o identificador (ID) da transação que o usuário deseja excluir.
+O ID possui exatamente 4 caracteres alfanuméricos (Ex: A1B2, 6N5G).
+
+Mensagem: {text}
+
+Retorne APENAS o JSON no formato:
+{{
+  "identifier": "ID_ENCONTRADO"
+}}
+"""

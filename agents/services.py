@@ -16,7 +16,7 @@ try:
     from langchain_openai import ChatOpenAI
     from langchain.prompts import PromptTemplate
     from langchain_core.output_parsers import JsonOutputParser
-    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT, ACTIVE_GENERAL_PROMPT
+    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT, ACTIVE_GENERAL_PROMPT, DELETE_PROMPT
     HAS_LANGCHAIN = True
 except ImportError:
     HAS_LANGCHAIN = False
@@ -222,13 +222,35 @@ class AIAgentService:
         except Exception as e: return f"Erro: {str(e)}"
 
     def _handle_delete(self, text, user):
-        match = re.search(r'\b([A-Z0-9]{4})\b', text.upper())
-        if not match: return "Informe o ID de 4 caracteres."
-        tx = Transaction.objects.filter(user=user, identifier=match.group(1)).first()
-        if not tx: return "ID não encontrado."
-        id_code = tx.identifier
-        tx.delete()
-        return f" Transação *{id_code}* excluída!"
+        try:
+            if not self.llm:
+                # Fallback para regex se o LLM não estiver disponível
+                match = re.search(r'\b([A-Z0-9]{4})\b', text.upper())
+                if not match: return "Informe o ID de 4 caracteres."
+                identifier = match.group(1)
+            else:
+                parser = JsonOutputParser()
+                prompt = PromptTemplate(
+                    template=DELETE_PROMPT, 
+                    input_variables=["text"], 
+                    partial_variables={"format_instructions": parser.get_format_instructions()}
+                )
+                chain = prompt | self.llm | parser
+                data = chain.invoke({"text": text})
+                identifier = data.get('identifier', '').upper()
+
+            if not identifier:
+                return "Não consegui identificar o ID na sua mensagem. Por favor, envie o ID de 4 caracteres (Ex: 6N5G)."
+
+            tx = Transaction.objects.filter(user=user, identifier=identifier).first()
+            if not tx: return f"ID *{identifier}* não encontrado."
+            
+            id_code = tx.identifier
+            description = tx.description
+            tx.delete()
+            return f"✅ Transação *{id_code}* ({description}) excluída com sucesso!"
+        except Exception as e:
+            return f"Erro ao excluir: {str(e)}"
 
     def _handle_report(self, text, user):
         today = timezone.now().date()
