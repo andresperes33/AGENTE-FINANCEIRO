@@ -56,6 +56,8 @@ Retorne um JSON com os campos:
 - description: Nova descrição (se mencionada, senão null)
 - amount: Novo valor numérico (se mencionado, senão null)
 - category: Nova categoria (se mencionada, senão null)
+- type: "income" (para ganhos) ou "expense" (para gastos) (se mencionado, senão null)
+- date: Data no formato YYYY-MM-DD (se mencionada, senão null). Considere que hoje é {today}.
 
 Mensagem: {text}
 JSON:

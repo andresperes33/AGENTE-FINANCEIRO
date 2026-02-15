@@ -215,16 +215,41 @@ class AIAgentService:
 
     def _handle_edit(self, text, user):
         try:
+            today = timezone.now().date().strftime('%Y-%m-%d')
             parser = JsonOutputParser()
-            prompt = PromptTemplate(template=EDIT_PROMPT, input_variables=["text"], partial_variables={"format_instructions": parser.get_format_instructions()})
+            prompt = PromptTemplate(
+                template=EDIT_PROMPT, 
+                input_variables=["text"], 
+                partial_variables={
+                    "format_instructions": parser.get_format_instructions(),
+                    "today": today
+                }
+            )
             chain = prompt | self.llm | parser
             data = chain.invoke({"text": text})
+            
             identifier = data.get('identifier', '').upper()
             tx = Transaction.objects.filter(user=user, identifier=identifier).first()
-            if not tx: return f"ID {identifier} não encontrado."
-            if data.get('description'): tx.description = data['description']
-            if data.get('amount'): tx.amount = float(str(data['amount']).replace(',', '.'))
-            if data.get('category'): tx.category = data['category']
+            
+            if not tx: 
+                return f"❌ ID `{identifier}` não encontrado em seus registros."
+
+            # Atualizar campos apenas se foram fornecidos (usando is not None para aceitar 0 e strings vazias)
+            if data.get('description') is not None:
+                tx.description = data['description']
+            
+            if data.get('amount') is not None:
+                tx.amount = float(str(data['amount']).replace(',', '.'))
+            
+            if data.get('category') is not None:
+                tx.category = data['category']
+                
+            if data.get('type') is not None:
+                tx.type = data['type']
+                
+            if data.get('date') is not None:
+                tx.transaction_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+
             tx.save()
             
             response = f"🔄 **LANÇAMENTO ATUALIZADO!**\n\n"
@@ -236,7 +261,8 @@ class AIAgentService:
             response += f"📊 **Tipo:** {'📈 Receita' if tx.type == 'income' else '📉 Despesa'}\n\n"
             response += f"✨ _As alterações já estão refletidas no seu painel._"
             return response
-        except Exception as e: return f"Erro: {str(e)}"
+        except Exception as e: 
+            return f"⚠️ Erro ao editar lançamento: {str(e)}"
 
     def _handle_delete(self, text, user):
         try:
