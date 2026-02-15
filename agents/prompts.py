@@ -16,14 +16,25 @@ Intenção:
 """
 
 SCHEDULE_PROMPT = """
-Extraia os dados do agendamento da mensagem abaixo.
-Retorne um JSON com os campos:
-- title: O que é o compromisso (Ex: "Reunião com cliente", "Dentista", "Academia")
-- date: Data no formato YYYY-MM-DD. Se o usuário disser "amanhã", use {today_plus_1}. Se disser "hoje", use {today}.
-- time: Hora no formato HH:MM (24h). Se não houver hora, use "09:00".
+Sua tarefa é extrair os dados de um compromisso ou agenda da mensagem do usuário.
+Pense de forma inteligente sobre datas relativas e horários.
 
-Mensagem: {text}
-JSON:
+Regras:
+1. title: O que é o compromisso. Extraia de forma amigável (Ex: "Reunião de negócios", "Jantar com Maria", "Treino de perna").
+2. date: Data no formato YYYY-MM-DD. Considere que HOJE é {today}. 
+   - Se o usuário disser "amanhã", use {today_plus_1}. 
+   - Se disser "segunda que vem", calcule a data correta.
+   - O agendamento DEVE ser para uma data futura ou hoje.
+3. time: Hora no formato HH:MM (24h). Se o usuário não especificar, use "09:00".
+
+Mensagem do usuário: {text}
+
+Retorne APENAS um JSON no formato:
+{{
+  "title": "...",
+  "date": "YYYY-MM-DD",
+  "time": "HH:MM"
+}}
 """
 
 TRANSACTION_PROMPT = """
@@ -50,17 +61,25 @@ Retorne APENAS um JSON puro nestas chaves. Se não conseguir ler, retorne {"erro
 """
 
 EDIT_PROMPT = """
-Extraia as alterações que o usuário deseja fazer em uma transação existente.
-Retorne um JSON com os campos:
-- identifier: O ID de 4 caracteres (Ex: "A1B2")
-- description: Nova descrição (se mencionada, senão null)
-- amount: Novo valor numérico (se mencionado, senão null)
-- category: Nova categoria (se mencionada, senão null)
-- type: "income" (para ganhos) ou "expense" (para gastos) (se mencionado, senão null)
-- date: Data no formato YYYY-MM-DD (se mencionada, senão null). Considere que hoje é {today}.
+Extraia as alterações que o usuário deseja fazer em um registro existente (Transação ou Compromisso).
+O ID (identifier) é a chave principal.
+
+Campos para Transações: description, amount, category, type, date.
+Campos para Compromissos: title, date, time (ou date_time).
+
+Regras de JSON:
+- identifier: O ID informado (Ex: "A1B2" ou "AG3D")
+- description ou title: Novo texto
+- amount: Novo valor (se for transação)
+- category: Nova categoria (se for transação)
+- type: "income" ou "expense" (se for transação)
+- date: Nova data em YYYY-MM-DD
+- time: Nova hora em HH:MM (se for compromisso)
+
+Considere que hoje é {today}.
 
 Mensagem: {text}
-JSON:
+JSON (retorne null nos campos não mencionados):
 """
 
 REPORT_PROMPT = """
@@ -186,8 +205,8 @@ Resposta Contextual, Humana e Organizada (fracione com \\n\\n):
 """
 
 DELETE_PROMPT = """
-Extraia o identificador (ID) da transação que o usuário deseja excluir.
-O ID possui exatamente 4 caracteres alfanuméricos (Ex: A1B2, 6N5G).
+Extraia o identificador (ID) do registro que o usuário deseja excluir (Transação ou Compromisso).
+O ID possui exatamente 4 caracteres (Ex: A1B2, AG45).
 
 Mensagem: {text}
 

@@ -298,45 +298,77 @@ class AIAgentService:
             data = chain.invoke({"text": text})
             
             identifier = data.get('identifier', '').upper()
-            tx = Transaction.objects.filter(user=user, identifier=identifier).first()
-            
-            if not tx: 
-                return f"❌ ID `{identifier}` não encontrado em seus registros."
+            if not identifier:
+                return "Não consegui identificar o ID do registro que você quer editar."
 
-            # Atualizar campos apenas se foram fornecidos (usando is not None para aceitar 0 e strings vazias)
-            if data.get('description') is not None:
-                tx.description = data['description']
-            
-            if data.get('amount') is not None:
-                tx.amount = float(str(data['amount']).replace(',', '.'))
-            
-            if data.get('category') is not None:
-                tx.category = data['category']
-                
-            if data.get('type') is not None:
-                tx.type = data['type']
-                
-            if data.get('date') is not None:
-                tx.transaction_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            # Verificar se é compromisso ou transação pelo prefixo do ID
+            if identifier.startswith('AG'):
+                # EDITAR COMPROMISSO
+                appt = Appointment.objects.filter(user=user, identifier=identifier).first()
+                if not appt: return f"❌ Compromisso ID `{identifier}` não encontrado."
 
-            tx.save()
-            
-            response = f"🔄 **LANÇAMENTO ATUALIZADO!**\n\n"
-            response += f"🆔 **ID:** `{tx.identifier}`\n"
-            response += f"💰 **Valor:** `R$ {tx.amount:.2f}`\n"
-            response += f"📂 **Categoria:** {tx.category}\n"
-            response += f"📝 **Descrição:** {tx.description}\n"
-            response += f"🕒 **Data:** {tx.transaction_date.strftime('%d/%m/%Y')}\n"
-            response += f"📊 **Tipo:** {'📈 Receita' if tx.type == 'income' else '📉 Despesa'}\n\n"
-            response += f"✨ _As alterações já estão refletidas no seu painel._"
-            return response
+                changed = False
+                if data.get('title') or data.get('description'):
+                    appt.title = data.get('title') or data.get('description')
+                    changed = True
+                
+                # Se mudou data ou hora, precisamos recompor o date_time
+                new_date = data.get('date')
+                new_time = data.get('time')
+
+                if new_date or new_time:
+                    current_dt = appt.date_time
+                    d = datetime.strptime(new_date, '%Y-%m-%d').date() if new_date else current_dt.date()
+                    t = datetime.strptime(new_time, '%H:%M').time() if new_time else current_dt.time()
+                    appt.date_time = timezone.make_aware(datetime.combine(d, t))
+                    changed = True
+
+                if changed:
+                    appt.save()
+                    return f"🔄 **AGENDAMENTO ATUALIZADO!**\n\n📌 **O quê:** {appt.title}\n🕒 **Quando:** {appt.date_time.strftime('%d/%m/%Y às %H:%M')}\n🆔 **ID:** `{appt.identifier}`"
+                else:
+                    return "Não identifiquei alterações para fazer no compromisso."
+
+            else:
+                # EDITAR TRANSAÇÃO
+                tx = Transaction.objects.filter(user=user, identifier=identifier).first()
+                if not tx: 
+                    return f"❌ ID `{identifier}` não encontrado em seus registros."
+
+                # Atualizar campos apenas se foram fornecidos
+                if data.get('description') is not None:
+                    tx.description = data['description']
+                
+                if data.get('amount') is not None:
+                    tx.amount = float(str(data['amount']).replace(',', '.'))
+                
+                if data.get('category') is not None:
+                    tx.category = data['category']
+                    
+                if data.get('type') is not None:
+                    tx.type = data['type']
+                    
+                if data.get('date') is not None:
+                    tx.transaction_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+
+                tx.save()
+                
+                response = f"🔄 **LANÇAMENTO ATUALIZADO!**\n\n"
+                response += f"🆔 **ID:** `{tx.identifier}`\n"
+                response += f"💰 **Valor:** `R$ {tx.amount:.2f}`\n"
+                response += f"📂 **Categoria:** {tx.category}\n"
+                response += f"📝 **Descrição:** {tx.description}\n"
+                response += f"🕒 **Data:** {tx.transaction_date.strftime('%d/%m/%Y')}\n"
+                response += f"📊 **Tipo:** {'📈 Receita' if tx.type == 'income' else '📉 Despesa'}\n\n"
+                response += f"✨ _As alterações já estão refletidas no seu painel._"
+                return response
         except Exception as e: 
-            return f"⚠️ Erro ao editar lançamento: {str(e)}"
+            return f"⚠️ Erro ao editar registro: {str(e)}"
 
     def _handle_delete(self, text, user):
         try:
             if not self.llm:
-                # Fallback para regex se o LLM não estiver disponível
+                # Fallback para regex
                 match = re.search(r'\b([A-Z0-9]{4})\b', text.upper())
                 if not match: return "Informe o ID de 4 caracteres."
                 identifier = match.group(1)
@@ -352,15 +384,23 @@ class AIAgentService:
                 identifier = data.get('identifier', '').upper()
 
             if not identifier:
-                return "Não consegui identificar o ID na sua mensagem. Por favor, envie o ID de 4 caracteres (Ex: 6N5G)."
+                return "Não consegui identificar o ID na sua mensagem. Por favor, envie o ID de 4 caracteres (Ex: 6N5G ou AG3D)."
 
-            tx = Transaction.objects.filter(user=user, identifier=identifier).first()
-            if not tx: return f"ID *{identifier}* não encontrado."
-            
-            id_code = tx.identifier
-            description = tx.description
-            tx.delete()
-            return f"🗑️ **LANÇAMENTO EXCLUÍDO!**\n\n✅ A transação `{id_code}` (*{description}*) foi removida com sucesso de seus registros."
+            if identifier.startswith('AG'):
+                # EXCLUIR COMPROMISSO
+                appt = Appointment.objects.filter(user=user, identifier=identifier).first()
+                if not appt: return f"ID *{identifier}* não encontrado na sua agenda."
+                title = appt.title
+                appt.delete()
+                return f"🗑️ **COMPROMISSO REMOVIDO!**\n\n✅ O evento `{identifier}` (*{title}*) foi excluído da sua agenda."
+            else:
+                # EXCLUIR TRANSAÇÃO
+                tx = Transaction.objects.filter(user=user, identifier=identifier).first()
+                if not tx: return f"ID *{identifier}* não encontrado em suas finanças."
+                id_code = tx.identifier
+                description = tx.description
+                tx.delete()
+                return f"🗑️ **LANÇAMENTO EXCLUÍDO!**\n\n✅ A transação `{id_code}` (*{description}*) foi removida com sucesso."
         except Exception as e:
             return f"Erro ao excluir: {str(e)}"
 
@@ -473,7 +513,13 @@ class AIAgentService:
                 title=data.get('title', 'Compromisso'),
                 date_time=dt_obj
             )
-            return f"📅 **COMPROMISSO AGENDADO!**\n\n📌 **O quê:** {appt.title}\n🕒 **Quando:** {dt_obj.strftime('%d/%m/%Y às %H:%M')}\n🆔 **ID:** `{appt.identifier}`\n\n🚀 _Eu te avisarei quando estiver chegando a hora!_"
+            
+            response = f"📅 **COMPROMISSO AGENDADO!**\n\n"
+            response += f"📌 **O quê:** {appt.title}\n"
+            response += f"🕒 **Quando:** {dt_obj.strftime('%d/%m/%Y às %H:%M')}\n"
+            response += f"🆔 **ID:** `{appt.identifier}`\n\n"
+            response += f"🚀 _Eu te avisarei quando estiver chegando a hora! Para remover ou editar, use o ID_ `{appt.identifier}`."
+            return response
         except Exception as e:
             return f"Erro ao agendar: {str(e)}"
     def _handle_general_chat(self, text, user):
