@@ -22,14 +22,16 @@ HOJE É: {today}
 AMANHÃ É: {today_plus_1}
 
 REGRAS:
-1. **title**: O que é o compromisso. (Ex: Médico, Reunião, Mercado).
+1. **title**: O que é o compromisso. (Ex: Médico, Reunião, Mercado). Apenas da mensagem atual.
 2. **date**: Data no formato YYYY-MM-DD. 
-   - Se disser "amanhã", use a data {today_plus_1}.
-   - Se disser "hoje", use {today}.
-   - Se for um dia numérico (ex: "dia 20"), use o mẽs atual ou próximo.
-3. **time**: Hora no formato HH:MM. (Ex: "4 da tarde" = 16:00).
+   - "Amanhã" = {today_plus_1}.
+   - "Hoje" = {today}.
+3. **time**: Hora no formato HH:MM. 
+   - Se disser "lá pelas 4", assuma 16:00 (se tarde) ou 04:00.
+   - Se não tiver certeza da hora, use "09:00" ou a mais provável.
+   - Tente ao máximo preencher, não deixe null se puder chutar com confiança.
 
-ATENÇÃO: Extraia APENAS o que está nesta mensagem. Ignore conversas anteriores.
+ATENÇÃO: IGNORAR conversas antigas. FOCO TOTAL nesta mensagem.
 
 Retorne JSON VÁLIDO:
 {{
