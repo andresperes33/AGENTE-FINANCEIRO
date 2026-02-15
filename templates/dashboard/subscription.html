@@ -23,8 +23,8 @@
                             class="w-2 h-2 rounded-full {% if subscription.is_active %}bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]{% else %}bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]{% endif %}">
                         </div>
                         <span
-                            class="text-sm font-bold uppercase tracking-widest {% if subscription.is_active %}text-emerald-400{% else %}text-rose-400{% endif %}">{%
-                            if subscription.is_active %}Plano Ativo{% else %}Assinatura Expirada{% endif %}</span>
+                            class="text-sm font-bold uppercase tracking-widest {% if subscription.is_active %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                            {% if subscription.is_active %}Plano Ativo{% else %}Assinatura Expirada{% endif %}</span>
                     </div>
                 </div>
                 <div class="mt-10 p-6 rounded-2xl bg-dark/50 border border-dark-border/50 text-left space-y-4">

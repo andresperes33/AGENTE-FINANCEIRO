@@ -273,10 +273,7 @@ def reports(request):
 @login_required
 def subscription_detail(request):
     """Detalhes da assinatura"""
-    try:
-        subscription = Subscription.objects.get(user=request.user)
-    except Subscription.DoesNotExist:
-        subscription = None
+    subscription = Subscription.objects.filter(user=request.user).first()
     
     context = {'subscription': subscription}
     return render(request, 'dashboard/subscription.html', context)
