@@ -65,13 +65,15 @@ def generate_random_password(length=8):
 
 
 def process_kirvano_event(payload, event_type):
-    # Aceita tanto o evento real quando o de teste da Kirvano
-    if event_type in ['purchase.approved', 'RECURRING']:
+    # Aceita os tipos de evento da Kirvano (compra aprovada ou recorrência)
+    if event_type in ['purchase.approved', 'RECURRING', 'SALE_APPROVED']:
         customer_data = payload.get('customer', {})
-        subscription_data = payload.get('subscription', {}) or payload.get('purchase', {}) or payload
+        # O payload real tem o plano dentro de 'plan'
+        plan_data = payload.get('plan', {})
         
         email = customer_data.get('email')
-        phone = customer_data.get('phone')
+        # Tenta pegar 'phone' ou 'phone_number' do payload real
+        phone = customer_data.get('phone') or customer_data.get('phone_number')
         name = customer_data.get('name') or 'Cliente'
         
         if not email: 
@@ -91,11 +93,15 @@ def process_kirvano_event(payload, event_type):
             user.must_change_password = True
             user.save()
             
+        # Pega o ID da venda/assinatura e o nome do plano de diversas formas possíveis
+        sub_id = payload.get('sale_id') or payload.get('id') or payload.get('subscription', {}).get('id') or 'TEST_ID'
+        plan_name = plan_data.get('name') or payload.get('plan_name') or 'Assistente Financeiro'
+
         Subscription.objects.update_or_create(
             user=user, 
             defaults={
-                'kirvano_subscription_id': subscription_data.get('id', 'TEST_ID'), 
-                'plan_name': subscription_data.get('plan_name', 'Assistente Financeiro'), 
+                'kirvano_subscription_id': sub_id, 
+                'plan_name': plan_name, 
                 'status': 'active', 
                 'start_date': timezone.now()
             }
