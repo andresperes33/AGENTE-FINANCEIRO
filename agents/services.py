@@ -209,7 +209,16 @@ class AIAgentService:
             if data.get('amount'): tx.amount = float(str(data['amount']).replace(',', '.'))
             if data.get('category'): tx.category = data['category']
             tx.save()
-            return f" Transação {identifier} atualizada!"
+            
+            response = f"🔄 *Lançamento Atualizado com Sucesso!* \n\n"
+            response += f"🆔 *ID:* {tx.identifier}\n"
+            response += f"💰 *Valor:* R$ {tx.amount:.2f}\n"
+            response += f"🏷️ *Tipo:* {'Receita' if tx.type == 'income' else 'Despesa'}\n"
+            response += f"📄 *Descrição:* {tx.description}\n"
+            response += f"🏷️ *Categoria:* {tx.category}\n"
+            response += f"📅 *Data:* {tx.transaction_date.strftime('%d/%m/%Y')}\n\n"
+            response += f"✅ Todas as alterações foram salvas no seu painel."
+            return response
         except Exception as e: return f"Erro: {str(e)}"
 
     def _handle_delete(self, text, user):
