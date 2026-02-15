@@ -494,17 +494,22 @@ class AIAgentService:
             today_str = today.strftime('%Y-%m-%d')
             tomorrow_str = (today + timedelta(days=1)).strftime('%Y-%m-%d')
             
-            prompt = PromptTemplate(
-                template=SCHEDULE_PROMPT, 
-                input_variables=["text"], 
-                partial_variables={
-                    "format_instructions": parser.get_format_instructions(),
-                    "today": today_str,
-                    "today_plus_1": tomorrow_str
-                }
-            )
-            chain = prompt | self.llm | parser
-            data = chain.invoke({"text": text})
+            # CRIAÇÃO DO AGENTE DE AGENDAMENTO (System + User)
+            # A System Message define o comportamento e as regras estritas
+            system_message = SystemMessagePromptTemplate.from_template(SCHEDULE_PROMPT)
+            # A Human Message é apenas o input do usuário
+            human_message = HumanMessagePromptTemplate.from_template("{text}")
+            
+            chat_prompt = ChatPromptTemplate.from_messages([system_message, human_message])
+            
+            chain = chat_prompt | self.llm | parser
+            
+            # Invocando o agente com o contexto temporal atualizado
+            data = chain.invoke({
+                "text": text,
+                "today": today_str,
+                "today_plus_1": tomorrow_str
+            })
 
             # Se a IA identificar que faltam informações, ela não agenda
             if data.get('missing_info') or not data.get('title') or not data.get('date'):
