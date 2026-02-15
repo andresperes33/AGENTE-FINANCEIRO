@@ -88,20 +88,26 @@ class AIAgentService:
             return "A inteligência visual precisa de uma chave OpenAI ativa."
 
         try:
-            response = requests.get(image_url)
+            headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
+            response = requests.get(image_url, headers=headers_evo)
             if response.status_code != 200:
+                print(f"Erro ao baixar imagem: {response.status_code} - {response.text}")
                 return "Não consegui baixar a imagem para analisar."
             
             base64_image = base64.b64encode(response.content).decode('utf-8')
 
-            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
+            headers = {
+                "Content-Type": "application/json", 
+                "Authorization": f"Bearer {self.api_key}",
+                "apikey": settings.EVOLUTION_API_KEY
+            }
             payload = {
                 "model": "gpt-4o-mini",
                 "messages": [{"role": "user", "content": [{"type": "text", "text": VISION_PROMPT}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
                 "max_tokens": 500
             }
 
-            res = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+            res = requests.post("https://api.openai.com/v1/chat/completions", headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}, json=payload)
             result = res.json()
             content = result['choices'][0]['message']['content'].replace("```json", "").replace("```", "").strip()
             data = json.loads(content)
@@ -129,8 +135,10 @@ class AIAgentService:
 
         try:
             # 1. Baixar o arquivo de áudio da Evolution
-            response = requests.get(audio_url)
+            headers_evo = {"apikey": settings.EVOLUTION_API_KEY}
+            response = requests.get(audio_url, headers=headers_evo)
             if response.status_code != 200:
+                print(f"Erro ao baixar áudio: {response.status_code} - {response.text}")
                 return "Não consegui baixar o áudio para transcrever."
 
             # 2. Criar arquivo temporário para enviar para a OpenAI
