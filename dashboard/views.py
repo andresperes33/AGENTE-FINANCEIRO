@@ -273,7 +273,10 @@ def reports(request):
 @login_required
 def subscription_detail(request):
     """Detalhes da assinatura"""
-    subscription = get_object_or_404(Subscription, user=request.user)
+    try:
+        subscription = Subscription.objects.get(user=request.user)
+    except Subscription.DoesNotExist:
+        subscription = None
     
     context = {'subscription': subscription}
     return render(request, 'dashboard/subscription.html', context)
