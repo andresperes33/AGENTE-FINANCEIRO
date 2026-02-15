@@ -232,18 +232,48 @@ class AIAgentService:
 
     def _handle_report(self, text, user):
         today = timezone.now().date()
-        txs = Transaction.objects.filter(user=user, transaction_date__month=today.month).order_by('-transaction_date')[:5]
-        total_income = sum(t.amount for t in Transaction.objects.filter(user=user, type='income', transaction_date__month=today.month))
-        total_expense = sum(t.amount for t in Transaction.objects.filter(user=user, type='expense', transaction_date__month=today.month))
-        tx_list = "\n".join([f"- *{t.identifier}*: {t.description} (R$ {t.amount:.2f})" for t in txs])
-        context = f"Saldo: R$ {total_income - total_expense:.2f}\nÚltimas:\n{tx_list}"
-        if not self.llm: return f" Resumo:\n{context}"
+        
+        # Filtrar transações do mês e ano atual para evitar lixo de anos passados
+        month_txs = Transaction.objects.filter(
+            user=user, 
+            transaction_date__month=today.month, 
+            transaction_date__year=today.year
+        )
+        
+        # Estatísticas do Mês
+        month_income = sum(t.amount for t in month_txs.filter(type='income'))
+        month_expense = sum(t.amount for t in month_txs.filter(type='expense'))
+        
+        # Estatísticas de Hoje
+        today_txs = month_txs.filter(transaction_date=today)
+        today_income = sum(t.amount for t in today_txs.filter(type='income'))
+        today_expense = sum(t.amount for t in today_txs.filter(type='expense'))
+        
+        # Últimas 10 transações com data para a I.A. se situar
+        recent_txs = month_txs.order_by('-transaction_date', '-created_at')[:10]
+        tx_list = "\n".join([
+            f"- {t.identifier} ({t.transaction_date.strftime('%d/%m')}): {t.description} (R$ {t.amount:.2f} - {'Receita' if t.type == 'income' else 'Despesa'})" 
+            for t in recent_txs
+        ])
+        
+        context = f"Hoje é dia: {today.strftime('%d/%m/%Y')}\n\n"
+        context += f"--- RESUMO DE HOJE ({today.strftime('%d/%m')}) ---\n"
+        context += f"Ganhos: R$ {today_income:.2f}\nGastos: R$ {today_expense:.2f}\nSaldo do Dia: R$ {today_income - today_expense:.2f}\n\n"
+        context += f"--- RESUMO DO MÊS ATUAL ---\n"
+        context += f"Total Ganhos: R$ {month_income:.2f}\nTotal Gastos: R$ {month_expense:.2f}\nSaldo Acumulado: R$ {month_income - month_expense:.2f}\n\n"
+        context += f"--- ÚLTIMAS MOVIMENTAÇÕES ---\n"
+        context += f"{tx_list if tx_list else 'Nenhuma transação este mês.'}"
+        
+        if not self.llm: 
+            return f"📊 *Resumo Financeiro* \n\n{context}"
+            
         try:
             prompt = PromptTemplate.from_template(REPORT_PROMPT)
             chain = prompt | self.llm
             response = chain.invoke({"context": context, "question": text})
             return response.content
-        except: return context
+        except: 
+            return f"📊 *Resumo Financeiro* \n\n{context}"
 
     def _handle_schedule(self, text, user):
         try:
