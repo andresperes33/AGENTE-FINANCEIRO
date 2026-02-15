@@ -16,7 +16,7 @@ try:
     from langchain_openai import ChatOpenAI
     from langchain.prompts import PromptTemplate
     from langchain_core.output_parsers import JsonOutputParser
-    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT, ACTIVE_GENERAL_PROMPT, DELETE_PROMPT
+    from .prompts import ROUTER_PROMPT, TRANSACTION_PROMPT, REPORT_PROMPT, EDIT_PROMPT, VISION_PROMPT, SCHEDULE_PROMPT, INACTIVE_PROMPT, ACTIVE_GENERAL_PROMPT, DELETE_PROMPT, REPORT_PARAMS_PROMPT
     HAS_LANGCHAIN = True
 except ImportError:
     HAS_LANGCHAIN = False
@@ -164,7 +164,7 @@ class AIAgentService:
         if not self.llm:
             lower_text = text.lower()
             if any(x in lower_text for x in ['gastei', 'comprei', 'paguei', 'recebi', 'ganhei', 'salário']): return "TRANSACTION"
-            if any(x in lower_text for x in ['quanto', 'total', 'saldo', 'relatório', 'resumo']): return "REPORT"
+            if any(x in lower_text for x in ['quanto', 'total', 'saldo', 'relatório', 'resumo', 'mês', 'hoje', 'ontem']): return "REPORT"
             if any(x in lower_text for x in ['muda', 'altera', 'corrige', 'edita']): return "EDIT"
             if any(x in lower_text for x in ['apaga', 'deleta', 'exclui', 'remove']): return "DELETE"
             if any(x in lower_text for x in ['anota', 'agenda', 'lembrete', 'reunião']): return "SCHEDULE"
@@ -255,47 +255,86 @@ class AIAgentService:
     def _handle_report(self, text, user):
         today = timezone.now().date()
         
-        # Filtrar transações do mês e ano atual para evitar lixo de anos passados
-        month_txs = Transaction.objects.filter(
-            user=user, 
-            transaction_date__month=today.month, 
-            transaction_date__year=today.year
-        )
-        
-        # Estatísticas do Mês
-        month_income = sum(t.amount for t in month_txs.filter(type='income'))
-        month_expense = sum(t.amount for t in month_txs.filter(type='expense'))
-        
-        # Estatísticas de Hoje
-        today_txs = month_txs.filter(transaction_date=today)
-        today_income = sum(t.amount for t in today_txs.filter(type='income'))
-        today_expense = sum(t.amount for t in today_txs.filter(type='expense'))
+        # 1. Tentar extrair parâmetros da pergunta (Data e Categoria)
+        params = {"start_date": None, "end_date": None, "category": None, "is_detailed": False}
+        if self.llm:
+            try:
+                parser = JsonOutputParser()
+                prompt = PromptTemplate(
+                    template=REPORT_PARAMS_PROMPT, 
+                    input_variables=["text"], 
+                    partial_variables={"today": today.strftime('%d/%m/%Y'), "format_instructions": parser.get_format_instructions()}
+                )
+                chain = prompt | self.llm | parser
+                params = chain.invoke({"text": text})
+            except Exception as e:
+                print(f"Erro ao extrair parâmetros do relatório: {e}")
 
-        # Lista técnica e detalhada para relatórios completos
-        today_list = "\n".join([
-            f"📍 ID: {t.identifier} | ITEM: {t.description} | VALOR: R$ {t.amount:.2f} | CATEGORIA: {t.category} | TIPO: {'Receita' if t.type == 'income' else 'Despesa'}" 
-            for t in today_txs
+        # 2. Definir Período (Padrão: Mês Atual se não especificado)
+        start_date_str = params.get('start_date')
+        end_date_str = params.get('end_date')
+        category_filter = params.get('category')
+        
+        try:
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            else:
+                start_date = today.replace(day=1)
+        except:
+            start_date = today.replace(day=1)
+            
+        try:
+            if end_date_str:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            else:
+                end_date = today
+        except:
+            end_date = today
+
+        # 3. Filtrar Transações
+        query = Transaction.objects.filter(user=user, transaction_date__range=[start_date, end_date])
+        
+        # Se houver filtro de categoria (especificado pelo usuário)
+        if category_filter:
+            # Tentar busca flexível pela categoria
+            query = query.filter(category__icontains=category_filter)
+
+        transactions = query.order_by('transaction_date')
+        
+        # 4. Construir Contexto
+        income_txs = transactions.filter(type='income')
+        expense_txs = transactions.filter(type='expense')
+        
+        total_income = sum(t.amount for t in income_txs)
+        total_expense = sum(t.amount for t in expense_txs)
+        
+        # Lista de itens (Sempre incluímos se houver filtro de categoria ou for detalhado)
+        items_list = "\n".join([
+            f"📍 ID: {t.identifier} | DATA: {t.transaction_date.strftime('%d/%m')} | ITEM: {t.description} | VALOR: R$ {t.amount:.2f} | CATEGORIA: {t.category} | TIPO: {'Receita' if t.type == 'income' else 'Despesa'}" 
+            for t in transactions
         ])
-        
-        context = f"DATA DO RELATÓRIO: {today.strftime('%d/%m/%Y')}\n\n"
-        context += f"--- LISTA DE MOVIMENTAÇÕES DE HOJE ---\n"
-        context += f"{today_list if today_list else 'NENHUMA MOVIMENTAÇÃO ENCONTRADA HOJE.'}\n\n"
-        context += f"--- TOTALIZADORES DE HOJE ---\n"
-        context += f"GANHOS: R$ {today_income:.2f}\nGASTOS: R$ {today_expense:.2f}\nSALDO DO DIA: R$ {today_income - today_expense:.2f}\n\n"
-        
-        context += f"--- RESUMO MENSAL (ACUMULADO) ---\n"
-        context += f"TOTAL GANHOS: R$ {month_income:.2f}\nTOTAL GASTOS: R$ {month_expense:.2f}\nSALDO ACUMULADO: R$ {month_income - month_expense:.2f}"
-        
+
+        context = f"PERÍODO: {start_date.strftime('%d/%m/%Y')} até {end_date.strftime('%d/%m/%Y')}\n"
+        if category_filter:
+            context += f"FILTRO DE CATEGORIA: {category_filter}\n"
+        context += f"\n--- LISTA DE MOVIMENTAÇÕES ---\n"
+        context += f"{items_list if items_list else 'NENHUMA MOVIMENTAÇÃO ENCONTRADA NO PERÍODO.'}\n\n"
+        context += f"--- RESUMO ---\n"
+        context += f"TOTAL GANHOS: R$ {total_income:.2f}\n"
+        context += f"TOTAL GASTOS: R$ {total_expense:.2f}\n"
+        context += f"SALDO DO PERÍODO: R$ {total_income - total_expense:.2f}"
+
         if not self.llm: 
-            return f"📊 *Resumo Financeiro* \n\n{context}"
+            return f"📊 *Relatório Financeiro* \n\n{context}"
             
         try:
             prompt = PromptTemplate.from_template(REPORT_PROMPT)
             chain = prompt | self.llm
+            # Passamos a pergunta original e o contexto filtrado
             response = chain.invoke({"context": context, "question": text})
             return response.content
         except: 
-            return f"📊 *Resumo Financeiro* \n\n{context}"
+            return f"📊 *Relatório Financeiro* \n\n{context}"
 
     def _handle_schedule(self, text, user):
         try:

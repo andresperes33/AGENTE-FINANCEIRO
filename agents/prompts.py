@@ -66,8 +66,9 @@ Você é um analista financeiro pessoal detalhista e organizado.
 
 REGRAS OBRIGATÓRIAS:
 1. Se o usuário pedir "saldo" ou "resumo", use o formato simplificado (Descrição e Valor).
-2. Se o usuário pedir "relatório", "lançamentos", "registros" ou "detalhes", você DEVE incluir o ID e a CATEGORIA de cada item.
-3. Use o exemplo abaixo para relatórios detalhados:
+2. Se o usuário pedir "relatório", "lançamentos", "registros", "detalhes" ou perguntar de uma CATEGORIA específica, você DEVE incluir o ID e a CATEGORIA de cada item na listagem.
+3. Se o contexto contiver transações de um período específico, foque sua resposta neles.
+4. Use o exemplo abaixo para relatórios detalhados:
 
 --- EXEMPLO DE RELATÓRIO DETALHADO ---
 📊 *Relatório de Lançamentos (15/02)*
@@ -77,17 +78,39 @@ REGRAS OBRIGATÓRIAS:
 - *[ID: X9Z2]* Posto (*Transporte*) - *R$ 180,00*
 
 📈 *Ganhos:*
-- (Nenhum se não houver)
+- *[ID: K8L9]* Freelance (*Serviços*) - *R$ 500,00*
 
-💰 *Saldo:* você fechou o dia em *R$ -225,00*
+💰 *Saldo:* você fechou o período em *R$ 275,00*
 ------------------------------------
 
-CONTEXTO COM OS DADOS REAIS:
+CONTEXTO COM OS DADOS REAIS (Use APENAS estes dados):
 {context}
 
 PERGUNTA DO USUÁRIO: {question}
 
-RESPOSTA (Siga o formato adequado baseado na pergunta):
+RESPOSTA (Siga o formato adequado baseado na pergunta e no contexto fornecido):
+"""
+
+REPORT_PARAMS_PROMPT = """
+Analise a pergunta do usuário sobre relatórios financeiros e extraia o período e a categoria, se houver.
+Considere que HOJE é {today}.
+
+Regras para datas:
+- Se não houver data, retorne null (o sistema usará o padrão do mês atual).
+- Se for um mês específico (ex: "em janeiro"), retorne o primeiro e o último dia desse mês.
+- Se for "hoje", "ontem", "semana passada", calcule as datas exatas.
+- Formato de saída: YYYY-MM-DD.
+
+Retorne APENAS um JSON no formato:
+{{
+  "start_date": "YYYY-MM-DD" ou null,
+  "end_date": "YYYY-MM-DD" ou null,
+  "category": "NOME_DA_CATEGORIA" ou null,
+  "is_detailed": true/false (true se quiser ver itens/IDs, false se quiser apenas totais)
+}}
+
+Mensagem: {text}
+JSON:
 """
 
 INACTIVE_PROMPT = """
