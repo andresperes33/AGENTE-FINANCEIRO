@@ -7,7 +7,7 @@
     <!-- Filtros -->
     <div class="bg-dark-lighter border border-dark-border rounded-xl p-6 shadow-sm">
         <form method="get" class="flex flex-wrap items-end gap-4" id="filterForm">
-            <div class="flex-1 min-w-[200px]">
+            <div class="flex-1 min-w-[150px]">
                 <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Tipo</label>
                 <select name="type" id="type_filter_select"
                     class="w-full bg-dark border border-dark-border rounded-lg p-2 text-sm text-white focus:outline-none focus:border-primary">
@@ -16,7 +16,7 @@
                     <option value="expense">Despesas (-)</option>
                 </select>
             </div>
-            <div class="flex-1 min-w-[200px]">
+            <div class="flex-1 min-w-[150px]">
                 <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Categoria</label>
                 <select name="category" id="category_filter_select"
                     class="w-full bg-dark border border-dark-border rounded-lg p-2 text-sm text-white focus:outline-none focus:border-primary">
@@ -24,8 +24,18 @@
                     {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
                 </select>
             </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Desde</label>
+                <input type="date" name="date_from" id="date_from_input" value="{{ date_from|default:'' }}"
+                    class="w-full bg-dark border border-dark-border rounded-lg p-2 text-sm text-white focus:outline-none focus:border-primary">
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Até</label>
+                <input type="date" name="date_to" id="date_to_input" value="{{ date_to|default:'' }}"
+                    class="w-full bg-dark border border-dark-border rounded-lg p-2 text-sm text-white focus:outline-none focus:border-primary">
+            </div>
             <button type="submit"
-                class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-8 rounded-lg text-sm transition-all active:scale-95">Filtrar</button>
+                class="bg-primary hover:bg-primary-dark text-white font-bold py-2.5 px-8 rounded-lg text-sm transition-all active:scale-95">Filtrar</button>
         </form>
     </div>
 
@@ -34,10 +44,10 @@
         <div class="p-6 border-b border-dark-border flex justify-between items-center bg-dark/20 text-white">
             <h3 class="font-display text-xl font-bold">Extrato Detalhado</h3>
             <div class="flex gap-4">
-                <a href="{% url 'dashboard:export_pdf' %}?type={{ type_filter|default:'' }}&category={{ category_filter|default:'' }}"
-                    class="text-[10px] font-bold text-rose-400 bg-slate-800 px-3 py-2 rounded-lg border border-dark-border uppercase">PDF</a>
-                <a href="{% url 'dashboard:export_excel' %}?type={{ type_filter|default:'' }}&category={{ category_filter|default:'' }}"
-                    class="text-[10px] font-bold text-emerald-400 bg-slate-800 px-3 py-2 rounded-lg border border-dark-border uppercase">Excel</a>
+                <a href="{% url 'dashboard:export_pdf' %}?type={{ type_filter|default:'' }}&category={{ category_filter|default:'' }}&date_from={{ date_from|default:'' }}&date_to={{ date_to|default:'' }}"
+                    class="text-[10px] font-bold text-rose-400 bg-slate-800 px-3 py-2 rounded-lg border border-dark-border uppercase hover:bg-rose-500/10 transition-colors">PDF</a>
+                <a href="{% url 'dashboard:export_excel' %}?type={{ type_filter|default:'' }}&category={{ category_filter|default:'' }}&date_from={{ date_from|default:'' }}&date_to={{ date_to|default:'' }}"
+                    class="text-[10px] font-bold text-emerald-400 bg-slate-800 px-3 py-2 rounded-lg border border-dark-border uppercase hover:bg-emerald-500/10 transition-colors">Excel</a>
             </div>
         </div>
 
@@ -52,6 +62,7 @@
                         <th class="px-6 py-4">Descrição</th>
                         <th class="px-6 py-4">Categoria</th>
                         <th class="px-6 py-4 text-right">Valor</th>
+                        <th class="px-6 py-4 text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-dark-border/50">
@@ -75,6 +86,32 @@
                             class="px-6 py-5 text-right font-display font-bold text-base {% if t.type == 'income' %}text-emerald-400{% else %}text-rose-400{% endif %}">
                             R$ {{ t.amount|floatformat:2 }}
                         </td>
+                        <td class="px-6 py-5 text-center">
+                            <div class="flex justify-center gap-3">
+                                <a href="{% url 'dashboard:transaction_edit' t.pk %}"
+                                    class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                                    title="Editar">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'dashboard:transaction_delete' t.pk %}"
+                                    class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                                    title="Excluir">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path
+                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                        </path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -90,6 +127,8 @@
     // Configuração dos filtros
     document.getElementById('type_filter_select').value = "{{ type_filter|default:'' }}";
     document.getElementById('category_filter_select').value = "{{ category_filter|default:'' }}";
+    document.getElementById('date_from_input').value = "{{ date_from|default:'' }}";
+    document.getElementById('date_to_input').value = "{{ date_to|default:'' }}";
     // Preenchimento de dados seguro (Imune a formatadores)
     document.querySelectorAll('.js-fill').forEach(el => { el.textContent = el.getAttribute('data-val'); });
 </script>
