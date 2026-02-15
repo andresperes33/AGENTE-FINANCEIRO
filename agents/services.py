@@ -161,19 +161,36 @@ class AIAgentService:
             return f"Erro ao processar áudio: {str(e)}"
 
     def _route_intent(self, text):
+        lower_text = text.lower()
+        
+        # Fallback ou Pré-processamento: Priorizar REPORT se houver termos de consulta
+        # mesmo que tenha termos de transação (ex: "quanto gastei")
+        query_terms = ['quanto', 'o que', 'total', 'saldo', 'relatório', 'resumo', 'lista', 'mostra', 'balanço', 'nesse mês', 'neste mês', 'nessa semana', 'nesta semana', 'hoje', 'ontem']
+        transaction_terms = ['gastei', 'comprei', 'paguei', 'recebi', 'ganhei', 'salário', 'pix']
+        
+        has_query = any(x in lower_text for x in query_terms)
+        has_transaction = any(x in lower_text for x in transaction_terms)
+        
         if not self.llm:
-            lower_text = text.lower()
-            if any(x in lower_text for x in ['gastei', 'comprei', 'paguei', 'recebi', 'ganhei', 'salário']): return "TRANSACTION"
-            if any(x in lower_text for x in ['quanto', 'total', 'saldo', 'relatório', 'resumo', 'mês', 'hoje', 'ontem']): return "REPORT"
+            if has_query: return "REPORT"
+            if has_transaction: return "TRANSACTION"
             if any(x in lower_text for x in ['muda', 'altera', 'corrige', 'edita']): return "EDIT"
             if any(x in lower_text for x in ['apaga', 'deleta', 'exclui', 'remove']): return "DELETE"
             if any(x in lower_text for x in ['anota', 'agenda', 'lembrete', 'reunião']): return "SCHEDULE"
             return "OTHER"
+            
         try:
+            # Se a mensagem tiver termos de consulta e transação (ex: "Quanto gastei..."), 
+            # o LLM às vezes se confunde. Vamos reforçar a intenção.
             prompt = PromptTemplate.from_template(ROUTER_PROMPT)
             chain = prompt | self.llm
             response = chain.invoke({"text": text})
-            return response.content.strip().upper()
+            intent = response.content.strip().upper()
+            
+            # Reforço de segurança: se o LLM disse TRANSACTION mas tem termos de query claros, 
+            # e o valor extraído depois for 0, o ideal seria REPORT.
+            # Mas vamos confiar na atualização do prompt por enquanto.
+            return intent
         except: return "OTHER"
 
     def _handle_transaction(self, text, user):

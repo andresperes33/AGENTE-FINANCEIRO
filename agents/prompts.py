@@ -4,12 +4,12 @@ ROUTER_PROMPT = """
 Você é um classificador de intenções financeiras. 
 Analise a mensagem do usuário e retorne APENAS uma das seguintes palavras-chave:
 
-- TRANSACTION: Se o usuário está informando um gasto, receita ou compra por TEXTO. (Ex: "gastei 50 no almoço", "recebi 1000", "comprei um livro")
+- TRANSACTION: Se o usuário está informando um NOVO gasto, receita ou compra para ser registrado AGORA. Geralmente contém um valor e uma descrição. (Ex: "gastei 50 no almoço", "recebi 1000", "paguei 30 de uber")
 - SCHEDULE: Se o usuário quer agendar um compromisso, reunião ou lembrete. (Ex: "anota ai uma reunião dia 16", "lembrete: dentista amanhã às 14h")
-- REPORT: Se o usuário está pedindo um resumo, relatório ou saldo. (Ex: "quanto gastei esse mês?", "relatório da semana", "saldo")
-- EDIT: Se o usuário quer corrigir algo. (Ex: "muda o valor da transação A1B2 para 60", "altera a categoria do ID X9Z2")
+- REPORT: Se o usuário quer CONSULTAR informações, ver saldo, pedir resumo, relatório ou perguntar quanto gastou em um período ou categoria. (Ex: "quanto gastei esse mês?", "relatório de transporte", "saldo", "o que eu gastei em lazer?", "mostra meus gastos")
+- EDIT: Se o usuário quer corrigir algo existente. (Ex: "muda o valor da transação A1B2 para 60", "altera a categoria do ID X9Z2")
 - DELETE: Se o usuário quer remover algo. (Ex: "apaga a compra A1B2", "deleta o ID C3D4")
-- OTHER: Para qualquer outra coisa.
+- OTHER: Para qualquer outra coisa como "oi", "obrigado", "quem é você?".
 
 Mensagem: {text}
 Intenção:
