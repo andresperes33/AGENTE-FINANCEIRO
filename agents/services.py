@@ -503,9 +503,14 @@ class AIAgentService:
             )
             chain = prompt | self.llm | parser
             data = chain.invoke({"text": text})
+
+            # Se a IA identificar que faltam informações, ela não agenda
+            if data.get('missing_info') or not data.get('title') or not data.get('date'):
+                return "Com certeza! Para eu agendar, você poderia me dizer *o que* seria o compromisso e *qual o dia/horário*? \n\nExemplo: 'Marcar dentista amanhã às 14h'."
             
             # Combinar data e hora
-            dt_str = f"{data.get('date')} {data.get('time')}"
+            time_str = data.get('time') or "09:00"
+            dt_str = f"{data.get('date')} {time_str}"
             dt_obj = timezone.make_aware(datetime.strptime(dt_str, '%Y-%m-%d %H:%M'))
             
             appt = Appointment.objects.create(

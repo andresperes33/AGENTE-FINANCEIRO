@@ -16,24 +16,21 @@ Intenção:
 """
 
 SCHEDULE_PROMPT = """
-Sua tarefa é extrair os dados de um compromisso ou agenda da mensagem do usuário.
-Pense de forma inteligente sobre datas relativas e horários.
+Sua tarefa é extrair os dados de um compromisso da mensagem do usuário.
 
-Regras:
-1. title: O que é o compromisso. Extraia de forma amigável (Ex: "Reunião de negócios", "Jantar com Maria", "Treino de perna").
-2. date: Data no formato YYYY-MM-DD. Considere que HOJE é {today}. 
-   - Se o usuário disser "amanhã", use {today_plus_1}. 
-   - Se disser "segunda que vem", calcule a data correta.
-   - O agendamento DEVE ser para uma data futura ou hoje.
-3. time: Hora no formato HH:MM (24h). Se o usuário não especificar, use "09:00".
+REGRAS CRÍTICAS:
+1. Se o usuário NÃO disse O QUE é o compromisso (título) OU NÃO disse QUANDO (data/hora), você deve retornar o campo "missing_info": true. 
+2. NÃO CHUTE dados que não existem. Se ele disse "queria marcar um compromisso" sem dizer o quê ou quando, retorne "missing_info": true.
+3. title: O objeto do compromisso.
+4. date: YYYY-MM-DD. Considere HOJE = {today}.
+5. time: HH:MM.
 
-Mensagem do usuário: {text}
-
-Retorne APENAS um JSON no formato:
+Retorne APENAS o JSON:
 {{
-  "title": "...",
-  "date": "YYYY-MM-DD",
-  "time": "HH:MM"
+  "title": "..." ou null,
+  "date": "..." ou null,
+  "time": "..." ou null,
+  "missing_info": true/false
 }}
 """
 
