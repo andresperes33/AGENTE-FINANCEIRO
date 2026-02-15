@@ -32,9 +32,20 @@ def kirvano_webhook(request):
         print(f"Tipo do evento: {payload.get('event_type') or payload.get('type')}")
         print(f"--- ------------------------ ---")
 
-        # Se for teste e falhar assinatura, a gente deixa passar para validar o fluxo
-        if not validate_kirvano_signature(signature, request.body):
-             print("AVISO: Assinatura da Kirvano inválida, mas seguindo para teste...")
+        # SEGURANÇA: Validação Rigorosa da Assinatura
+        # Em produção, jamais deixe passar sem validar
+        secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
+        if secret:
+            if not validate_kirvano_signature(signature, request.body):
+                print("ERRO DE SEGURANÇA: Assinatura Kirvano Inválida!")
+                return JsonResponse({'error': 'Invalid Signature'}, status=403)
+        else:
+            print("AVISO CRÍTICO: KIRVANO_WEBHOOK_SECRET não configurado. O sistema está vulnerável.")
+            # Para manter compatibilidade se o usuário ainda não configurou, 
+            # podemos permitir mas logar o erro. Melhor seria bloquear.
+            # Vou bloquear para garantir a segurança solicitada.
+            if settings.DEBUG is False:
+                 return JsonResponse({'error': 'Webhook Secret Not Configured'}, status=500)
 
         event_id = payload.get('event_id') or payload.get('id') or f"test_{timezone.now().timestamp()}"
         event_type = payload.get('event_type') or payload.get('type') or 'test'
