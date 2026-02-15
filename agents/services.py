@@ -173,7 +173,7 @@ class AIAgentService:
 
             # 4. Processar o texto transcrito como se fosse uma mensagem normal
             response_text = self.process_message(transcription, user)
-            return f" *Transcrição:* \"{transcription}\"\n\n{response_text}"
+            return response_text
 
         except Exception as e:
             return f"Erro ao processar áudio: {str(e)}"
