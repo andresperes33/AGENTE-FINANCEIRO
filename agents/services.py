@@ -111,14 +111,14 @@ class AIAgentService:
             amount = float(str(data.get('amount', 0)).replace(',', '.'))
             tx = Transaction.objects.create(user=user, description=data.get('description', 'Comprovante'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.now().date())
             
-            response = f"✅ *Novo Lançamento Realizado! (via Foto)* \n\n"
-            response += f"🆔 *ID:* {tx.identifier}\n"
-            response += f"💰 *Valor:* R$ {amount:.2f}\n"
-            response += f"🏷️ *Tipo:* {'Receita' if tx.type == 'income' else 'Despesa'}\n"
-            response += f"📄 *Descrição:* {tx.description}\n"
-            response += f"🏷️ *Categoria:* {tx.category}\n"
-            response += f"📅 *Data:* {tx.transaction_date.strftime('%d/%m/%Y')}\n\n"
-            response += f"❌ Para excluir ou editar, envie o ID: *{tx.identifier}*"
+            response = f"✨ *LANÇAMENTO VIA FOTO CONCLUÍDO!* ✨\n\n"
+            response += f"🆔 **Identificador:** `{tx.identifier}`\n"
+            response += f"💰 **Valor:** `R$ {amount:.2f}`\n"
+            response += f"📂 **Categoria:** {tx.category}\n"
+            response += f"📝 **Descrição:** {tx.description}\n"
+            response += f"🕒 **Data:** {tx.transaction_date.strftime('%d/%m/%Y')}\n"
+            response += f"📊 **Tipo:** {'📈 Receita' if tx.type == 'income' else '📉 Despesa'}\n\n"
+            response += f"💡 _Dica: Você pode editar ou excluir este lançamento usando o ID_ `{tx.identifier}`."
             return response
         except Exception as e: return f"Erro ao analisar o comprovante: {str(e)}"
 
@@ -202,14 +202,14 @@ class AIAgentService:
             amount = float(str(data.get('amount', 0)).replace(',', '.'))
             tx = Transaction.objects.create(user=user, description=data.get('description', 'Transação'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.now().date())
             
-            response = f"✅ *Novo Lançamento Realizado!* \n\n"
-            response += f"🆔 *ID:* {tx.identifier}\n"
-            response += f"💰 *Valor:* R$ {amount:.2f}\n"
-            response += f"🏷️ *Tipo:* {'Receita' if tx.type == 'income' else 'Despesa'}\n"
-            response += f"📄 *Descrição:* {tx.description}\n"
-            response += f"🏷️ *Categoria:* {tx.category}\n"
-            response += f"📅 *Data:* {tx.transaction_date.strftime('%d/%m/%Y')}\n\n"
-            response += f"❌ Para excluir ou editar, envie o ID: *{tx.identifier}*"
+            response = f"✅ **LANÇAMENTO REGISTRADO!**\n\n"
+            response += f"🆔 **ID:** `{tx.identifier}`\n"
+            response += f"💰 **Valor:** `R$ {amount:.2f}`\n"
+            response += f"📂 **Categoria:** {tx.category}\n"
+            response += f"📝 **Descrição:** {tx.description}\n"
+            response += f"🕒 **Data:** {tx.transaction_date.strftime('%d/%m/%Y')}\n"
+            response += f"📊 **Tipo:** {'📈 Receita' if tx.type == 'income' else '📉 Despesa'}\n\n"
+            response += f"🗑️ _Para remover, envie: \"apaga {tx.identifier}\"_"
             return response
         except: return "Erro ao processar lançamento."
 
@@ -227,14 +227,14 @@ class AIAgentService:
             if data.get('category'): tx.category = data['category']
             tx.save()
             
-            response = f"🔄 *Lançamento Atualizado com Sucesso!* \n\n"
-            response += f"🆔 *ID:* {tx.identifier}\n"
-            response += f"💰 *Valor:* R$ {tx.amount:.2f}\n"
-            response += f"🏷️ *Tipo:* {'Receita' if tx.type == 'income' else 'Despesa'}\n"
-            response += f"📄 *Descrição:* {tx.description}\n"
-            response += f"🏷️ *Categoria:* {tx.category}\n"
-            response += f"📅 *Data:* {tx.transaction_date.strftime('%d/%m/%Y')}\n\n"
-            response += f"✅ Todas as alterações foram salvas no seu painel."
+            response = f"🔄 **LANÇAMENTO ATUALIZADO!**\n\n"
+            response += f"🆔 **ID:** `{tx.identifier}`\n"
+            response += f"💰 **Valor:** `R$ {tx.amount:.2f}`\n"
+            response += f"📂 **Categoria:** {tx.category}\n"
+            response += f"📝 **Descrição:** {tx.description}\n"
+            response += f"🕒 **Data:** {tx.transaction_date.strftime('%d/%m/%Y')}\n"
+            response += f"📊 **Tipo:** {'📈 Receita' if tx.type == 'income' else '📉 Despesa'}\n\n"
+            response += f"✨ _As alterações já estão refletidas no seu painel._"
             return response
         except Exception as e: return f"Erro: {str(e)}"
 
@@ -265,7 +265,7 @@ class AIAgentService:
             id_code = tx.identifier
             description = tx.description
             tx.delete()
-            return f"✅ Transação *{id_code}* ({description}) excluída com sucesso!"
+            return f"🗑️ **LANÇAMENTO EXCLUÍDO!**\n\n✅ A transação `{id_code}` (*{description}*) foi removida com sucesso de seus registros."
         except Exception as e:
             return f"Erro ao excluir: {str(e)}"
 
@@ -318,28 +318,25 @@ class AIAgentService:
 
         transactions = query.order_by('transaction_date')
         
-        # 4. Construir Contexto
+        # 4. Construir Contexto (Otimizado para o Prompt Premium)
         income_txs = transactions.filter(type='income')
         expense_txs = transactions.filter(type='expense')
         
         total_income = sum(t.amount for t in income_txs)
         total_expense = sum(t.amount for t in expense_txs)
         
-        # Lista de itens (Sempre incluímos se houver filtro de categoria ou for detalhado)
-        items_list = "\n".join([
-            f"📍 ID: {t.identifier} | DATA: {t.transaction_date.strftime('%d/%m')} | ITEM: {t.description} | VALOR: R$ {t.amount:.2f} | CATEGORIA: {t.category} | TIPO: {'Receita' if t.type == 'income' else 'Despesa'}" 
-            for t in transactions
-        ])
+        items_list = ""
+        for t in transactions:
+            data_fmt = t.transaction_date.strftime('%d/%m')
+            tipo_fmt = 'GANHO' if t.type == 'income' else 'GASTO'
+            items_list += f"- [{data_fmt}] ID: {t.identifier} | {t.description} | {t.category} | R$ {t.amount:.2f} ({tipo_fmt})\n"
 
         context = f"PERÍODO: {start_date.strftime('%d/%m/%Y')} até {end_date.strftime('%d/%m/%Y')}\n"
         if category_filter:
-            context += f"FILTRO DE CATEGORIA: {category_filter}\n"
-        context += f"\n--- LISTA DE MOVIMENTAÇÕES ---\n"
-        context += f"{items_list if items_list else 'NENHUMA MOVIMENTAÇÃO ENCONTRADA NO PERÍODO.'}\n\n"
-        context += f"--- RESUMO ---\n"
-        context += f"TOTAL GANHOS: R$ {total_income:.2f}\n"
-        context += f"TOTAL GASTOS: R$ {total_expense:.2f}\n"
-        context += f"SALDO DO PERÍODO: R$ {total_income - total_expense:.2f}"
+            context += f"CATEGORIA FILTRADA: {category_filter}\n"
+        
+        context += f"\nMOVIMENTAÇÕES:\n{items_list if items_list else 'Nenhuma encontrada.'}\n"
+        context += f"\nRESUMO:\n- Ganhos: R$ {total_income:.2f}\n- Gastos: R$ {total_expense:.2f}\n- Saldo: R$ {total_income - total_expense:.2f}"
 
         if not self.llm: 
             return f"📊 *Relatório Financeiro* \n\n{context}"
@@ -381,7 +378,7 @@ class AIAgentService:
                 title=data.get('title', 'Compromisso'),
                 date_time=dt_obj
             )
-            return f" ✅ *Compromisso Agendado!* \n📌 {appt.title}\n📅 {dt_obj.strftime('%d/%m/%Y às %H:%M')}\nID: *{appt.identifier}*"
+            return f"📅 **COMPROMISSO AGENDADO!**\n\n📌 **O quê:** {appt.title}\n🕒 **Quando:** {dt_obj.strftime('%d/%m/%Y às %H:%M')}\n🆔 **ID:** `{appt.identifier}`\n\n🚀 _Eu te avisarei quando estiver chegando a hora!_"
         except Exception as e:
             return f"Erro ao agendar: {str(e)}"
     def _handle_general_chat(self, text, user):
