@@ -65,7 +65,7 @@ class AIAgentService:
     def process_inactive_user(self, text, user):
         """Gera uma resposta humanizada e com memória para usuários sem assinatura ativa"""
         if not self.llm:
-            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
+            return f"Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: {settings.KIRVANO_CHECKOUT_URL}"
         
         try:
             # Buscar histórico das últimas 5 mensagens
@@ -80,7 +80,7 @@ class AIAgentService:
             return response.content
         except Exception as e:
             print(f"Erro Memória: {e}")
-            return "Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b"
+            return f"Adoraria te ajudar, mas as funções avançadas são para assinantes. Ative agora em: {settings.KIRVANO_CHECKOUT_URL}"
 
     def process_image(self, message_id, user, base64_data=None, message_obj=None):
         """Analisa imagem de comprovante usando Vision do GPT-4o-mini"""

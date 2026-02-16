@@ -189,8 +189,10 @@ CONTEXTO IMPORTANTE:
 
 SOBRE A ASSINATURA:
 - O usuário atual está com a ASSINATURA INATIVA.
-- Para liberar meu processamento de áudios e agenda, ele precisa escolher um plano.
-- Link principal para ativar: https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b
+- Link principal (Mensal): https://pay.kirvano.com/6202e7eb-b115-412d-aa32-5fb797c45c0b
+- Opção Trimestral: https://pay.kirvano.com/5d14ca1e-e28b-416e-a98a-733f12671672
+- Opção Semestral: https://pay.kirvano.com/a522b04a-3fe5-4c0d-bd8c-10ff16271761
+- Opção Anual: https://pay.kirvano.com/5fe36647-05d2-4d3e-bc41-033c74a48c50
 
 HISTÓRICO RECENTE:
 {history}
