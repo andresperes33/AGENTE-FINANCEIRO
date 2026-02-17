@@ -29,8 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-9x(=h$7d80@!84mo-ygls$5)x3gfy35o=dj-m9r42@*se=a21o')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv('DEBUG', 'True') == 'True'
-DEBUG = True # FORTEMENTE HABILITADO PARA DEBUG URGENTE
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
@@ -202,9 +201,20 @@ LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 # Email Configuration
-# TEMPORARIAMENTE DESABILITADO - Link aparece nos logs
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
+# Default to console backend for development unless EMAIL_HOST is set
+if os.getenv('EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.com>')
+    EMAIL_TIMEOUT = 30  # Timeout to prevent hanging
+else:
+    # Print emails to console for development
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
 
 # Logging - Mostrar erros no console/logs do servidor
 LOGGING = {
