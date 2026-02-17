@@ -548,9 +548,21 @@ class AIAgentService:
             for msg in reversed(history_msgs):
                 history_text += f"Usuário: {msg.raw_content}\nAgente: {msg.response_sent}\n"
 
+            # Buscar informações do plano atual
+            from subscriptions.models import Subscription
+            sub = Subscription.objects.filter(user=user).first()
+            sub_info = "Não identificado."
+            if sub:
+                data_exp = sub.expire_date.strftime('%d/%m/%Y') if sub.expire_date else "Vitalícia ou indeterminada"
+                sub_info = f"Plano {sub.plan_name}, válido até {data_exp}."
+
             prompt = PromptTemplate.from_template(ACTIVE_GENERAL_PROMPT)
             chain = prompt | self.llm
-            response = chain.invoke({"text": text, "history": history_text or "Início da conversa."})
+            response = chain.invoke({
+                "text": text, 
+                "history": history_text or "Início da conversa.",
+                "subscription_info": sub_info
+            })
             return response.content
         except Exception as e:
             print(f"Erro Chat Geral: {e}")
