@@ -201,16 +201,19 @@ LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 # Email Configuration
-# Default to console backend for development unless EMAIL_HOST is set
-if os.getenv('EMAIL_HOST'):
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.getenv('EMAIL_HOST')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.com>')
-else:
-    # Print emails to console for development
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
+# TEMPORARIAMENTE DESABILITADO - Link aparece nos logs
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
+
+# TODO: Reabilitar quando corrigir credenciais Gmail
+# if os.getenv('EMAIL_HOST'):
+#     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#     EMAIL_HOST = os.getenv('EMAIL_HOST')
+#     EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+#     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+#     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+#     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+#     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.com>')
+# else:
+#     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#     DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
