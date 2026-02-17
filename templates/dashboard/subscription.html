@@ -17,7 +17,8 @@
                     </svg>
                 </div>
                 <div class="space-y-2">
-                    <h3 class="text-3xl font-display font-bold text-white tracking-tight">{{subscription.plan_name|default:"Plano Gestão I.A." }}</h3>
+                    <h3 class="text-3xl font-display font-bold text-white tracking-tight">
+                        {{subscription.plan_name|default:"Plano Gestão I.A." }}</h3>
                     <div class="flex items-center justify-center gap-2">
                         <div
                             class="w-2 h-2 rounded-full {% if subscription.is_active %}bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]{% else %}bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]{% endif %}">
@@ -30,12 +31,14 @@
                 <div class="mt-10 p-6 rounded-2xl bg-dark/50 border border-dark-border/50 text-left space-y-4">
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-500 uppercase tracking-widest">Início do Ciclo</span>
-                        <span class="font-bold text-slate-200">{{ subscription.start_date|date:"d M Y"|default:"-" }}</span>
+                        <span class="font-bold text-slate-200">{{ subscription.start_date|date:"d M Y"|default:"-"
+                            }}</span>
                     </div>
                     <div class="h-px bg-dark-border/30"></div>
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-500 uppercase tracking-widest">Próxima Renovação</span>
-                        <span class="font-bold text-slate-200">{{ subscription.expire_date|date:"d M Y"|default:"-" }}</span>
+                        <span class="font-bold text-slate-200">{{ subscription.expire_date|date:"d M Y"|default:"-"
+                            }}</span>
                     </div>
                 </div>
                 {% if not subscription.is_active %}
@@ -43,12 +46,13 @@
                     class="btn btn-primary w-full mt-10 py-4 text-lg font-bold shadow-2xl shadow-primary/30">Ativar
                     Assinatura</a>
                 {% endif %}
-                <p class="mt-6 text-[10px] text-slate-600 font-mono">ID: {{subscription.kirvano_subscription_id|default:"AUT-000000-DASH" }}</p>
+                <p class="mt-6 text-[10px] text-slate-600 font-mono">ID:
+                    {{subscription.kirvano_subscription_id|default:"AUT-000000-DASH" }}</p>
             </div>
         </div>
         <div class="card bg-slate-800/20 border-dark-border/40 p-10 flex flex-col justify-between">
             <div>
-                <h4 class="font-display font-bold text-xl text-white mb-6">Seu Agente Financeiro</h4>
+                <h4 class="font-display font-bold text-xl text-white mb-6">Seu Agente Prime</h4>
                 <div class="space-y-8">
                     <div class="flex gap-4">
                         <div
@@ -91,7 +95,7 @@
                     </svg>
                 </div>
                 <p class="text-xs font-medium text-slate-400 leading-snug">Seu acesso está garantido. Aproveite todas as
-                    funcionalidades do Agente.ai</p>
+                    funcionalidades do Agente Prime</p>
             </div>
         </div>
     </div>
