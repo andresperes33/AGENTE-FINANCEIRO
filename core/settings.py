@@ -205,15 +205,25 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
 
-# TODO: Reabilitar quando corrigir credenciais Gmail
-# if os.getenv('EMAIL_HOST'):
-#     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#     EMAIL_HOST = os.getenv('EMAIL_HOST')
-#     EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-#     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-#     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-#     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-#     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.com>')
-# else:
-#     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-#     DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
+# Logging - Mostrar erros no console/logs do servidor
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
