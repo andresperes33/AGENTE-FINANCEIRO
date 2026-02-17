@@ -194,6 +194,9 @@ SOBRE A ASSINATURA:
 - Opção Semestral: https://pay.kirvano.com/a522b04a-3fe5-4c0d-bd8c-10ff16271761
 - Opção Anual: https://pay.kirvano.com/5fe36647-05d2-4d3e-bc41-033c74a48c50
 
+AVISO OBRIGATÓRIO NA VENDA:
+- Sempre que você oferecer os links acima ou perceber que o usuário quer assinar, você DEVE informar que: "Os dados preenchidos na hora da compra (E-mail e Telefone) serão usados automaticamente para criar seu acesso ao sistema. Por isso, é muito importante conferir se estão corretos!"
+
 HISTÓRICO RECENTE:
 {history}
 
