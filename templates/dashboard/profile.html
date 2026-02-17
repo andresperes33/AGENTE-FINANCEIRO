@@ -43,14 +43,14 @@
                         segurança</p>
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2 opacity-70">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Telefone
                         (WhatsApp)</label>
-                    <input type="text" name="telefone" value="{{ user.telefone }}"
-                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all outline-none"
-                        required>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase mt-1 px-1">💡 Usado para envios via
-                        Chat/Voz</p>
+                    <input type="text" value="{{ user.telefone }}"
+                        class="w-full bg-dark border-2 border-dark-border rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed"
+                        disabled>
+                    <p class="text-[10px] text-slate-600 font-bold uppercase mt-1 px-1">🔒 Telefone fixo para sua
+                        segurança</p>
                 </div>
 
                 <div class="space-y-2">

@@ -286,7 +286,6 @@ def profile(request):
     
     if request.method == 'POST':
         user.nome = request.POST.get('nome')
-        user.telefone = request.POST.get('telefone')
         
         # Atualizar senha se fornecida
         new_password = request.POST.get('new_password')
