@@ -210,7 +210,6 @@ if os.getenv('EMAIL_HOST'):
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.com>')
-    EMAIL_TIMEOUT = 30  # Timeout to prevent hanging
 else:
     # Print emails to console for development
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
