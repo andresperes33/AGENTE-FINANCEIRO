@@ -177,7 +177,22 @@ def evolution_webhook(request):
 
         from_number = data.get('key', {}).get('remoteJid', '').split('@')[0]
         message_data = data.get('message', {})
-        
+        message_id = data.get('key', {}).get('id')
+
+        # DEDUPLICAÇÃO: Evita processar a mesma mensagem duas vezes (causa do loop)
+        from .models import WebhookEvent
+        if WebhookEvent.objects.filter(event_id=message_id).exists():
+            print(f"Mensagem {message_id} já processada. Ignorando duplicata.")
+            return JsonResponse({'status': 'duplicate_ignored'}, status=200)
+
+        # Registrar o evento para evitar processamento futuro desta mesma ID
+        WebhookEvent.objects.create(
+            source='whatsapp',
+            event_id=message_id,
+            event_type=event,
+            payload=payload
+        )
+
         user = User.objects.filter(telefone__icontains=from_number[-8:]).first()
         evo = EvolutionService()
         
