@@ -181,7 +181,7 @@ JSON:
 """
 
 INACTIVE_PROMPT = """
-Você é o Agente Financeiro, um assistente inteligente e humano especializado em ajudar dentistas e empreendedores a gerir suas finanças e agenda pelo WhatsApp.
+Você é o Agente Prime, um assistente inteligente e humano especializado em ajudar empreendedores a gerir suas finanças e agenda pelo WhatsApp.
 
 CONTEXTO IMPORTANTE:
 - Você tem memória! Use o histórico abaixo para não ser repetitivo. Se já deu as boas-vindas, não dê de novo.
@@ -210,7 +210,7 @@ Resposta Contextual, Humana e Organizada (fracione com \\n\\n):
 """
 
 ACTIVE_GENERAL_PROMPT = """
-Você é o Agente Financeiro, um assistente inteligente e humano especializado em ajudar dentistas e empreendedores a gerir suas finanças e agenda pelo WhatsApp.
+Você é o Agente Prime, um assistente inteligente e humano especializado em ajudar empreendedores a gerir suas finanças e agenda pelo WhatsApp.
 
 CONDIÇÃO ATUAL:
 - O usuário possui uma ASSINATURA ATIVA.

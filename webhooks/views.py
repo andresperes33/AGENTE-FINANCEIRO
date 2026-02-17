@@ -148,7 +148,7 @@ def process_kirvano_event(payload, event_type):
 def send_welcome_message(user, phone, email, temp_password):
     evo = EvolutionService()
     msg = f"🚀 *Pagamento Confirmado!* \n\n"
-    msg += f"Olá {user.nome}, seja muito bem-vindo(a) ao Agente Financeiro! \n\n"
+    msg += f"Olá {user.nome}, seja muito bem-vindo(a) ao Agente Prime! \n\n"
     msg += "A partir de agora eu sou seu assistente pessoal. \n\n"
     msg += "Aqui estão seus dados de acesso ao painel web: \n"
     msg += f"🔗 Site: https://agentefinanceiro-github-desktop.m9hodh.easypanel.host/ \n"
