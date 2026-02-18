@@ -151,7 +151,7 @@ def send_welcome_message(user, phone, email, temp_password):
     msg += f"Olá {user.nome}, seja muito bem-vindo(a) ao Agente Prime! \n\n"
     msg += "A partir de agora eu sou seu assistente pessoal. \n\n"
     msg += "Aqui estão seus dados de acesso ao painel web: \n"
-    msg += f"🔗 Site: https://agentefinanceiro-github-desktop.m9hodh.easypanel.host/ \n"
+    msg += f"🔗 Site: {settings.SITE_URL}\n"
     msg += f"📧 Email: {email}\n"
     msg += f"🔑 Senha: *{temp_password}* \n\n"
     msg += "Como posso te ajudar hoje?"

@@ -38,6 +38,8 @@ if csrf_origins:
 else:
     CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host and host != '*']
 
+SITE_URL = os.getenv('SITE_URL', 'https://agenteprime.cloud')
+
 
 # Application definition
 
@@ -209,12 +211,12 @@ if os.getenv('EMAIL_HOST'):
     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.com>')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Agente Prime <noreply@agenteprime.cloud>')
     EMAIL_TIMEOUT = 30  # Timeout to prevent hanging
 else:
     # Print emails to console for development
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.com>'
+    DEFAULT_FROM_EMAIL = 'Agente Prime <noreply@agenteprime.cloud>'
 
 # Logging - Mostrar erros no console/logs do servidor
 LOGGING = {
