@@ -52,13 +52,18 @@ class EvolutionService:
         self.send_presence(clean_number, 'composing')
         time.sleep(2)
 
-        # 2. FRACIONAR E ENVIAR
+        # 2. LIMPAR LITERAL \n\n (se o LLM retornar a string "\n\n" em vez de quebra de linha real)
+        text = text.replace('\\n', '\n')
+
+        # 3. FRACIONAR E ENVIAR
         parts = [p.strip() for p in text.split('\n\n') if p.strip()]
         if len(parts) <= 1:
             parts = [p.strip() for p in text.split('\n') if p.strip()]
 
         success = True
         for part in parts:
+            if not part: continue # Pular partes vazias
+            
             payload = {
                 "number": clean_number,
                 "text": part
@@ -68,7 +73,7 @@ class EvolutionService:
                 response = requests.post(url, json=payload, headers=headers)
                 response.raise_for_status()
                 print(f"Parte enviada com sucesso!")
-                time.sleep(0.8)
+                time.sleep(1) # Pequena pausa entre balões
             except Exception as e:
                 print(f"ERRO EVOLUTION: {str(e)}")
                 logger.error(f"Erro ao enviar parte da mensagem: {str(e)}")
