@@ -37,7 +37,7 @@ def kirvano_webhook(request):
         secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
         if secret:
             if not validate_kirvano_signature(signature, request.body):
-                print("ERRO DE SEGURANÇA: Assinatura Kirvano Inválida!")
+                print(f"ERRO DE SEGURANÇA: Assinatura Kirvano Inválida! (Signature recebida: {signature[:10]}...)")
                 return JsonResponse({'error': 'Invalid Signature'}, status=403)
         else:
             print("AVISO CRÍTICO: KIRVANO_WEBHOOK_SECRET não configurado. O sistema está vulnerável.")
@@ -246,11 +246,16 @@ def evolution_webhook(request):
 
 
 def validate_kirvano_signature(signature, body):
-    secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
-    if not secret:
+    raw_secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
+    if not raw_secret:
         print("AVISO: Kirvano Webhook Secret não configurado no EasyPanel!")
         return True
+    
+    # Remove espaços em branco acidentais que podem vir do EasyPanel
+    secret = raw_secret.strip()
+    
     if not signature:
         return False
+        
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature, expected)
+    return hmac.compare_digest(str(signature), str(expected))
