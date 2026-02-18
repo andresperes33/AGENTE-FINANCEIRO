@@ -34,11 +34,20 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 if csrf_origins:
-    CSRF_TRUSTED_ORIGINS = csrf_origins.split(',')
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',') if origin]
 else:
     CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host and host != '*']
 
 SITE_URL = os.getenv('SITE_URL', 'https://agenteprime.cloud')
+
+# Configurações de Segurança para Produção
+if not DEBUG:
+    # Informa ao Django que está atrás de um proxy seguro (EasyPanel/Traefik)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 # Application definition
