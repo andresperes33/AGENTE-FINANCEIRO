@@ -26,11 +26,12 @@ def kirvano_webhook(request):
     try:
         body_unicode = request.body.decode('utf-8')
         payload = json.loads(body_unicode)
-        # Tenta capturar de várias formas possíveis (com X-, sem X-, maiúsculo/minúsculo)
         signature = (
             request.headers.get('X-Kirvano-Signature') or 
             request.headers.get('x-kirvano-signature') or
             request.headers.get('Kirvano-Signature') or
+            request.headers.get('Security-Token') or
+            request.headers.get('security-token') or
             request.headers.get('Signature')
         )
         
@@ -263,11 +264,18 @@ def validate_kirvano_signature(signature, body):
         print("AVISO: Kirvano Webhook Secret não configurado no EasyPanel!")
         return True
     
-    # Remove espaços em branco acidentais que podem vir do EasyPanel
     secret = raw_secret.strip()
     
     if not signature:
         return False
-        
+
+    # 1. Tenta validação por HMAC (Padrão Kirvano Seguro)
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(str(signature), str(expected))
+    if hmac.compare_digest(str(signature), str(expected)):
+        return True
+        
+    # 2. Tenta validação por Token Direto (Fallback para header Security-Token)
+    if hmac.compare_digest(str(signature), str(secret)):
+        return True
+        
+    return False
