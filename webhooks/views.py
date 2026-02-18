@@ -37,7 +37,8 @@ def kirvano_webhook(request):
         secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
         if secret:
             if not validate_kirvano_signature(signature, request.body):
-                print(f"ERRO DE SEGURANÇA: Assinatura Kirvano Inválida! (Signature recebida: {signature[:10]}...)")
+                sig_preview = str(signature)[:10] if signature else "AUSENTE"
+                print(f"ERRO DE SEGURANÇA: Assinatura Kirvano Inválida! (Signature recebida: {sig_preview}...)")
                 return JsonResponse({'error': 'Invalid Signature'}, status=403)
         else:
             print("AVISO CRÍTICO: KIRVANO_WEBHOOK_SECRET não configurado. O sistema está vulnerável.")
@@ -102,7 +103,7 @@ def process_kirvano_event(payload, event_type):
             user.must_change_password = True
             user.save()
             
-        sub_id = payload.get('sale_id') or payload.get('id') or payload.get('subscription', {}).get('id') or 'TEST_ID'
+        sub_id = payload.get('sale_id') or payload.get('id') or (payload.get('subscription') or {}).get('id') or 'TEST_ID'
         plan_name = (plan_data.get('name') or payload.get('plan_name') or 'Assistente Financeiro').lower()
 
         # Cálculo da data de expiração baseado no plano
