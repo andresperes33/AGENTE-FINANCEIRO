@@ -26,19 +26,30 @@ def kirvano_webhook(request):
     try:
         body_unicode = request.body.decode('utf-8')
         payload = json.loads(body_unicode)
-        signature = request.headers.get('X-Kirvano-Signature') or request.headers.get('x-kirvano-signature')
+        # Tenta capturar de várias formas possíveis (com X-, sem X-, maiúsculo/minúsculo)
+        signature = (
+            request.headers.get('X-Kirvano-Signature') or 
+            request.headers.get('x-kirvano-signature') or
+            request.headers.get('Kirvano-Signature') or
+            request.headers.get('Signature')
+        )
         
         print(f"--- WEBHOOK KIRVANO RECEBIDO ---")
         print(f"Tipo do evento: {payload.get('event_type') or payload.get('type')}")
-        print(f"--- ------------------------ ---")
+        print(f"Signature encontrada: {'SIM' if signature else 'AUSENTE'}")
 
-        # SEGURANÇA: Validação Rigorosa da Assinatura
-        # Em produção, jamais deixe passar sem validar
         secret = os.getenv('KIRVANO_WEBHOOK_SECRET') or os.getenv('KIRVANO_WEBHOOK_TOKEN')
         if secret:
             if not validate_kirvano_signature(signature, request.body):
                 sig_preview = str(signature)[:10] if signature else "AUSENTE"
-                print(f"ERRO DE SEGURANÇA: Assinatura Kirvano Inválida! (Signature recebida: {sig_preview}...)")
+                print(f"ERRO DE SEGURANÇA: Assinatura Kirvano Inválida! (Signature recebida: {sig_preview})")
+                
+                # Se a assinatura for ausente, vamos logar todos os headers para debug
+                if not signature:
+                    print("Headers recebidos para diagnóstico:")
+                    for header, value in request.headers.items():
+                        print(f"  {header}: {value}")
+                
                 return JsonResponse({'error': 'Invalid Signature'}, status=403)
         else:
             print("AVISO CRÍTICO: KIRVANO_WEBHOOK_SECRET não configurado. O sistema está vulnerável.")
