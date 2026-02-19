@@ -486,8 +486,7 @@ class AIAgentService:
         items_list = ""
         for t in transactions:
             data_fmt = t.transaction_date.strftime('%d/%m')
-            tipo_fmt = 'GANHO' if t.type == 'income' else 'GASTO'
-            items_list += f"- [{data_fmt}] ID: {t.identifier} | {t.description} | {t.category} | R$ {t.amount:.2f} ({tipo_fmt})\n"
+            items_list += f"• {data_fmt} - ID: {t.identifier} | {t.description} ({t.category}) - R$ {t.amount:.2f}\n"
 
         context = f"PERÍODO: {start_date.strftime('%d/%m/%Y')} até {end_date.strftime('%d/%m/%Y')}\n"
         if category_filter:
