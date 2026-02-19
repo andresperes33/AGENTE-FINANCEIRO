@@ -460,47 +460,47 @@ class AIAgentService:
         except:
             end_date = today
 
-        # 3. Filtrar Transações
-        query = Transaction.objects.filter(user=user, transaction_date__range=[start_date, end_date])
+        # 3. Base da Query (Período)
+        base_query = Transaction.objects.filter(user=user, transaction_date__range=[start_date, end_date])
         
-        # Se houver filtro de categoria (especificado pelo usuário)
+        # Filtro de Categoria (Blacklist de termos genéricos)
         if category_filter:
-            # Lista de termos que NÃO devem ser tratados como categoria (são termos de sistema/tipo)
             blacklist = ['despesa', 'despensa', 'gasto', 'receita', 'ganho', 'faturamento', 'entrada', 'saida']
             if category_filter.lower() in blacklist:
                 category_filter = None
-            
             if category_filter:
-                # Tentar busca flexível pela categoria
-                query = query.filter(category__icontains=category_filter)
+                base_query = base_query.filter(category__icontains=category_filter)
 
-        transactions = query.order_by('transaction_date')
-        
-        # Filtragem por Tipo (income/expense/all)
+        # 4. Totais do Período (Independente do filtro de exibição)
+        income_txs_all = base_query.filter(type='income')
+        expense_txs_all = base_query.filter(type='expense')
+        total_income = sum(t.amount for t in income_txs_all)
+        total_expense = sum(t.amount for t in expense_txs_all)
+
+        # 5. Filtragem para Exibição (O que o usuário pediu para LISTAR)
+        display_query = base_query.order_by('transaction_date')
         report_type = params.get('type', 'all')
+        
         if report_type == 'income':
-            transactions = transactions.filter(type='income')
+            display_query = display_query.filter(type='income')
         elif report_type == 'expense':
-            transactions = transactions.filter(type='expense')
-            
-        # 4. Construir Contexto (Otimizado para o Prompt Premium)
-        income_txs = transactions.filter(type='income')
-        expense_txs = transactions.filter(type='expense')
-        
-        total_income = sum(t.amount for t in income_txs)
-        total_expense = sum(t.amount for t in expense_txs)
-        
+            display_query = display_query.filter(type='expense')
+
+        # 6. Construir Lista de Itens
         items_list = ""
-        for t in transactions:
+        for t in display_query:
             data_fmt = t.transaction_date.strftime('%d/%m')
             items_list += f"• {data_fmt} - ID: {t.identifier} | {t.description} ({t.category}) - R$ {t.amount:.2f}\n"
 
         context = f"PERÍODO: {start_date.strftime('%d/%m/%Y')} até {end_date.strftime('%d/%m/%Y')}\n"
         if category_filter:
             context += f"CATEGORIA FILTRADA: {category_filter}\n"
+        if report_type != 'all':
+            tipo_label = "GANHOS/RECEITAS" if report_type == 'income' else "GASTOS/DESPESAS"
+            context += f"TIPO FILTRADO: {tipo_label}\n"
         
-        context += f"\nMOVIMENTAÇÕES:\n{items_list if items_list else 'Nenhuma encontrada.'}\n"
-        context += f"\nRESUMO:\n- Ganhos: R$ {total_income:.2f}\n- Gastos: R$ {total_expense:.2f}\n- Saldo: R$ {total_income - total_expense:.2f}"
+        context += f"\nMOVIMENTAÇÕES LISTADAS:\n{items_list if items_list else 'Nenhuma movimentação deste tipo encontrada no período.'}\n"
+        context += f"\nRESUMO DO PERÍODO:\n- Ganhos: R$ {total_income:.2f}\n- Gastos: R$ {total_expense:.2f}\n- Saldo: R$ {total_income - total_expense:.2f}"
 
         if not self.llm: 
             return f"📊 *Relatório Financeiro* \n\n{context}"

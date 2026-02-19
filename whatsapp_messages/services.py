@@ -30,7 +30,7 @@ class EvolutionService:
 
     def send_message(self, number, text):
         """
-        Envia mensagens fracionadas com status de digitando
+        Envia mensagens de forma otimizada para evitar timeouts
         """
         import time
         if not all([self.base_url, self.api_key, self.instance]):
@@ -38,7 +38,6 @@ class EvolutionService:
             return False
 
         clean_number = ''.join(filter(str.isdigit, number))
-        # Se for número do Brasil sem o 55 (10 ou 11 dígitos), adiciona o 55
         if len(clean_number) in [10, 11] and not clean_number.startswith('55'):
             clean_number = '55' + clean_number
         
@@ -48,32 +47,35 @@ class EvolutionService:
             "Content-Type": "application/json"
         }
 
-        # 1. MOSTRAR 'DIGITANDO...' POR 2 SEGUNDOS
+        # 1. MOSTRAR 'DIGITANDO...' MAIS RÁPIDO
         self.send_presence(clean_number, 'composing')
-        time.sleep(2)
+        time.sleep(0.5)
 
-        # 2. LIMPAR LITERAL \n\n (se o LLM retornar a string "\n\n" em vez de quebra de linha real)
+        # 2. LIMPAR LITERAL \n\n
         text = text.replace('\\n', '\n')
 
-        # 3. FRACIONAR E ENVIAR
-        parts = [p.strip() for p in text.split('\n\n') if p.strip()]
-        if len(parts) <= 1:
-            parts = [p.strip() for p in text.split('\n') if p.strip()]
+        # 3. FRACIONAR APENAS SE FOR MUITO GRANDE (WHATSAPP LIMIT ~4096)
+        max_chars = 4000
+        if len(text) <= max_chars:
+            parts = [text]
+        else:
+            parts = [text[i:i+max_chars] for i in range(0, len(text), max_chars)]
 
         success = True
         for part in parts:
-            if not part: continue # Pular partes vazias
+            if not part.strip(): continue
             
             payload = {
                 "number": clean_number,
-                "text": part
+                "text": part.strip()
             }
             try:
-                print(f"Enviando parte via Evolution para {clean_number}...")
-                response = requests.post(url, json=payload, headers=headers)
+                print(f"Enviando bloco via Evolution ({len(part)} chars)...")
+                response = requests.post(url, json=payload, headers=headers, timeout=15)
                 response.raise_for_status()
-                print(f"Parte enviada com sucesso!")
-                time.sleep(1) # Pequena pausa entre balões
+                print(f"Bloco enviado com sucesso!")
+                if len(parts) > 1:
+                    time.sleep(0.5)
             except Exception as e:
                 print(f"ERRO EVOLUTION: {str(e)}")
                 logger.error(f"Erro ao enviar parte da mensagem: {str(e)}")
