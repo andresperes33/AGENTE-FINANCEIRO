@@ -33,18 +33,14 @@
                 <div class="mt-10 p-6 rounded-2xl bg-dark/50 border border-dark-border/50 text-left space-y-4">
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-500 uppercase tracking-widest">Início do Ciclo</span>
-                        <span class="font-bold text-slate-200">
-                            {% if subscription.start_date %}{{ subscription.start_date|date:"d M Y" }}{% else %}-{%
-                            endif %}
-                        </span>
+                        <span class="font-bold text-slate-200">{% if subscription.start_date %}{{
+                            subscription.start_date|date:"d M Y" }}{% else %}-{% endif %}</span>
                     </div>
                     <div class="h-px bg-dark-border/30"></div>
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-500 uppercase tracking-widest">Próxima Renovação</span>
-                        <span class="font-bold text-slate-200">
-                            {% if subscription.expire_date %}{{ subscription.expire_date|date:"d M Y" }}{% else %}-{%
-                            endif %}
-                        </span>
+                        <span class="font-bold text-slate-200">{% if subscription.expire_date %}{{
+                            subscription.expire_date|date:"d M Y" }}{% else %}-{% endif %}</span>
                     </div>
                 </div>
                 {% if not subscription.is_active %}
