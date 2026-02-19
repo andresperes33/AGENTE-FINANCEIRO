@@ -89,9 +89,10 @@ CAMPOS POSSÍVEIS:
 
 REGRAS DE EXTRAÇÃO (MUITO IMPORTANTE):
 1. **Rigor nos Dados**: Retorne APENAS o que o usuário pediu explicitamente para mudar.
-2. **Data/Hora**: Se o usuário pedir para mudar apenas o HORÁRIO, retorne 'date' como null. Se pedir apenas a DATA, retorne 'time' como null.
-3. **Não assuma**: Nunca use a data de hoje ({today}) como padrão para o campo 'date' se o usuário não mencionou uma data.
-4. **ID**: O ID deve ser capturado exatamente como enviado (Ex: "AGRL" ou "A1B2").
+2. **Data/Hora**: Se o usuário pedir para mudar apenas o HORÁRIO (Ex: "muda para 21:25"), retorne 'date' como null. 
+3. **Comparações**: Em frases como "de 21:30 para 21:25", ignore o horário antigo e capture apenas o NOVO. Não assuma que isso muda a data do compromisso para amanhã.
+4. **Fuso Horário**: Não tente ajustar datas baseado no horário atual. Se a data não foi mencionada, retorne 'date': null.
+5. **ID**: Capture exatamente o ID de 4 caracteres (Ex: "AGRL").
 
 Retorne um JSON puro no formato abaixo:
 {{

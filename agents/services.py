@@ -28,7 +28,7 @@ class AIAgentService:
         self.api_key = settings.OPENAI_API_KEY
         if HAS_LANGCHAIN and self.api_key:
             try:
-                self.llm = ChatOpenAI(model="gpt-4.1-mini", api_key=self.api_key, temperature=0)
+                self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=self.api_key, temperature=0)
             except Exception as e:
                 print(f"Erro ao inicializar LLM: {e}")
                 self.llm = None
@@ -101,7 +101,7 @@ class AIAgentService:
 
             # 2. Chamar OpenAI Vision
             payload = {
-                "model": "gpt-4.1-mini",
+                "model": "gpt-4o-mini",
                 "messages": [
                     {
                         "role": "user", 
@@ -317,11 +317,26 @@ class AIAgentService:
                 # Se mudou data ou hora, precisamos recompor o date_time
                 new_date = data.get('date')
                 new_time = data.get('time')
-
+                
                 if new_date or new_time:
-                    current_dt = appt.date_time
-                    d = datetime.strptime(new_date, '%Y-%m-%d').date() if new_date else current_dt.date()
-                    t = datetime.strptime(new_time, '%H:%M').time() if new_time else current_dt.time()
+                    # Usar o date_time atual convertido para o fuso local como base
+                    current_dt = timezone.localtime(appt.date_time)
+                    
+                    # Só altera a DATA se vier algo válido do LLM e não for nulo
+                    d = current_dt.date()
+                    if new_date and isinstance(new_date, str) and len(new_date.strip()) > 5:
+                        try:
+                            d = datetime.strptime(new_date.strip(), '%Y-%m-%d').date()
+                        except: pass
+                        
+                    # Só altera a HORA se vier algo válido do LLM e não for nulo
+                    t = current_dt.time()
+                    if new_time and isinstance(new_time, str) and len(new_time.strip()) >= 4:
+                        try:
+                            # Tentar vários formatos comuns se necessário, mas hoje o prompt pede HH:MM
+                            t = datetime.strptime(new_time.strip(), '%H:%M').time()
+                        except: pass
+                    
                     appt.date_time = timezone.make_aware(datetime.combine(d, t))
                     changed = True
 
