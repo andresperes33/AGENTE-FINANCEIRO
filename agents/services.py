@@ -492,15 +492,28 @@ class AIAgentService:
             data_fmt = t.transaction_date.strftime('%d/%m')
             items_list += f"• {data_fmt} - ID: {t.identifier} | {t.description} ({t.category}) - R$ {t.amount:.2f}\n"
 
-        context = f"PERÍODO: {start_date.strftime('%d/%m/%Y')} até {end_date.strftime('%d/%m/%Y')}\n"
-        if category_filter:
-            context += f"CATEGORIA FILTRADA: {category_filter}\n"
-        if report_type != 'all':
-            tipo_label = "GANHOS/RECEITAS" if report_type == 'income' else "GASTOS/DESPESAS"
-            context += f"TIPO FILTRADO: {tipo_label}\n"
+        context = f"DADOS REAIS DO BANCO DE DADOS (HOJE É {today.strftime('%d/%m/%Y')}):\n"
+        context += f"PERÍODO CONSULTADO: {start_date.strftime('%d/%m/%Y')} até {end_date.strftime('%d/%m/%Y')}\n"
         
-        context += f"\nMOVIMENTAÇÕES LISTADAS:\n{items_list if items_list else 'Nenhuma movimentação deste tipo encontrada no período.'}\n"
-        context += f"\nRESUMO DO PERÍODO:\n- Ganhos: R$ {total_income:.2f}\n- Gastos: R$ {total_expense:.2f}\n- Saldo: R$ {total_income - total_expense:.2f}"
+        if category_filter:
+            context += f"FILTRO DE CATEGORIA: {category_filter}\n"
+        
+        tipo_label = "GERAL (TUDO)"
+        if report_type == 'income': tipo_label = "APENAS GANHOS (RECEITAS)"
+        elif report_type == 'expense': tipo_label = "APENAS GASTOS (DESPESAS)"
+        context += f"FILTRO DE TIPO: {tipo_label}\n"
+        
+        context += f"\n--- LISTAGEM DE MOVIMENTAÇÕES (%s) ---\n" % tipo_label
+        if items_list:
+            context += items_list
+        else:
+            context += f"ATENÇÃO: Não existem registros de {tipo_label} neste período no banco de dados.\n"
+        
+        context += f"\n--- RESUMO FINANCEIRO DO PERÍODO ({start_date.strftime('%d/%m')} a {end_date.strftime('%d/%m')}) ---\n"
+        context += f"- Total de Ganhos: R$ {total_income:.2f}\n"
+        context += f"- Total de Gastos: R$ {total_expense:.2f}\n"
+        context += f"- Saldo Final do Período: R$ {total_income - total_expense:.2f}\n"
+        context += "\nAVISO: Não mostre transações que não estão na listagem acima."
 
         if not self.llm: 
             return f"📊 *Relatório Financeiro* \n\n{context}"
