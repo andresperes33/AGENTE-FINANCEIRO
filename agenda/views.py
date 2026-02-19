@@ -20,16 +20,20 @@ def appointment_create(request):
         time_str = request.POST.get('time')
         
         try:
-            dt_str = f"{date_str} {time_str}"
-            dt_obj = timezone.make_aware(datetime.strptime(dt_str, '%Y-%m-%d %H:%M'))
-            
-            Appointment.objects.create(
-                user=request.user,
-                title=title,
-                date_time=dt_obj
-            )
-            messages.success(request, 'Compromisso agendado com sucesso!')
-            return redirect('agenda:list')
+            if date_str and time_str:
+                dt_str = f"{date_str} {time_str}"
+                naive_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M')
+                dt_obj = timezone.make_aware(naive_dt)
+                
+                Appointment.objects.create(
+                    user=request.user,
+                    title=title,
+                    date_time=dt_obj
+                )
+                messages.success(request, 'Compromisso agendado com sucesso!')
+                return redirect('agenda:list')
+            else:
+                messages.error(request, 'Data e hora são obrigatórios.')
         except Exception as e:
             messages.error(request, f'Erro ao agendar: {e}')
             
@@ -48,19 +52,35 @@ def appointment_edit(request, pk):
         time_str = request.POST.get('time')
         
         try:
-            dt_str = f"{date_str} {time_str}"
-            dt_obj = timezone.make_aware(datetime.strptime(dt_str, '%Y-%m-%d %H:%M'))
-            appt.date_time = dt_obj
-            appt.save()
-            messages.success(request, 'Compromisso atualizado!')
-            return redirect('agenda:list')
+            if date_str and time_str:
+                dt_str = f"{date_str} {time_str}"
+                # datetime.strptime retorna um objeto naive
+                naive_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M')
+                # Converte para aware usando o timezone atual
+                dt_obj = timezone.make_aware(naive_dt)
+                appt.date_time = dt_obj
+                appt.save()
+                messages.success(request, 'Compromisso atualizado!')
+                return redirect('agenda:list')
+            else:
+                messages.error(request, 'Data e hora são obrigatórios.')
         except Exception as e:
             messages.error(request, f'Erro ao atualizar: {e}')
             
+    # Prepara dados para o formulário
+    date_iso = ""
+    time_iso = "09:00"
+    if appt.date_time:
+        # Garante que usamos o horário local para exibir no input
+        local_dt = timezone.localtime(appt.date_time)
+        date_iso = local_dt.date().isoformat()
+        time_iso = local_dt.strftime('%H:%M')
+        
     return render(request, 'agenda/form.html', {
         'appointment': appt,
-        'date_iso': appt.date_time.date().isoformat(),
-        'time_iso': appt.date_time.strftime('%H:%M')
+        'date_iso': date_iso,
+        'time_iso': time_iso,
+        'today_iso': timezone.now().date().isoformat()
     })
 
 @login_required
