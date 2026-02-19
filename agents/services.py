@@ -465,8 +465,14 @@ class AIAgentService:
         
         # Se houver filtro de categoria (especificado pelo usuário)
         if category_filter:
-            # Tentar busca flexível pela categoria
-            query = query.filter(category__icontains=category_filter)
+            # Lista de termos que NÃO devem ser tratados como categoria (são termos de sistema/tipo)
+            blacklist = ['despesa', 'despensa', 'gasto', 'receita', 'ganho', 'faturamento', 'entrada', 'saida']
+            if category_filter.lower() in blacklist:
+                category_filter = None
+            
+            if category_filter:
+                # Tentar busca flexível pela categoria
+                query = query.filter(category__icontains=category_filter)
 
         transactions = query.order_by('transaction_date')
         

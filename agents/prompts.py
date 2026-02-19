@@ -179,8 +179,14 @@ Retorne APENAS um JSON no formato:
   "start_date": "YYYY-MM-DD" ou null,
   "end_date": "YYYY-MM-DD" ou null,
   "category": "NOME_DA_CATEGORIA" ou null,
-  "is_detailed": true/false (true se quiser ver itens/IDs, false se quiser apenas totais)
+  "is_detailed": true/false
 }}
+
+IMPORTANTES: 
+- "Categoria" é algo específico (Ex: Alimentação, Uber, Aluguel). 
+- NÃO extraia "despesa", "gasto", "receita", "ganho" ou termos parecidos como categoria (isso é o TIPO da transação).
+- Se o usuário falar "relatório de despesas", o campo category deve ser null.
+
 
 Mensagem:
 \"\"\"
