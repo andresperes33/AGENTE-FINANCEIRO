@@ -94,7 +94,7 @@ REGRAS DE EXTRAÇÃO (MUITO IMPORTANTE):
 4. **ID**: O ID deve ser capturado exatamente como enviado (Ex: "AGRL" ou "A1B2").
 
 Retorne um JSON puro no formato abaixo:
-{
+{{
   "identifier": "ID_IDENTIFICADO",
   "description": "novo texto ou null",
   "title": "novo título ou null",
@@ -103,7 +103,7 @@ Retorne um JSON puro no formato abaixo:
   "type": "income/expense ou null",
   "date": "YYYY-MM-DD ou null",
   "time": "HH:MM ou null"
-}
+}}
 
 Considere que hoje é {today}.
 
