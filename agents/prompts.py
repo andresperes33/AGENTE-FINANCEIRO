@@ -176,14 +176,14 @@ Retorne APENAS um JSON no formato:
   "start_date": "YYYY-MM-DD" ou null,
   "end_date": "YYYY-MM-DD" ou null,
   "category": "NOME_DA_CATEGORIA" ou null,
+  "type": "income" ou "expense" ou "all",
   "is_detailed": true/false
 }}
 
 IMPORTANTES: 
 - "Categoria" é algo específico (Ex: Alimentação, Uber, Aluguel). 
-- NÃO extraia "despesa", "gasto", "receita", "ganho" ou termos parecidos como categoria (isso é o TIPO da transação).
-- Se o usuário falar "relatório de despesas", o campo category deve ser null.
-
+- NÃO extraia "despesa", "gasto", "receita", "ganho" ou termos parecidos como categoria.
+- "type": Se o usuário pedir apenas receitas/ganhos use "income". Se pedir gastos/despesas use "expense". Se não especificar ou pedir geral use "all".
 
 Mensagem:
 \"\"\"

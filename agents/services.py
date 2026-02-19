@@ -476,6 +476,13 @@ class AIAgentService:
 
         transactions = query.order_by('transaction_date')
         
+        # Filtragem por Tipo (income/expense/all)
+        report_type = params.get('type', 'all')
+        if report_type == 'income':
+            transactions = transactions.filter(type='income')
+        elif report_type == 'expense':
+            transactions = transactions.filter(type='expense')
+            
         # 4. Construir Contexto (Otimizado para o Prompt Premium)
         income_txs = transactions.filter(type='income')
         expense_txs = transactions.filter(type='expense')
