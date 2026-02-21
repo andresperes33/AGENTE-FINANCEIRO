@@ -303,10 +303,10 @@ class AIAgentService:
             if not identifier:
                 return "Não consegui identificar o ID do registro que você quer editar."
 
-            # Verificar se é compromisso ou transação pelo prefixo do ID
-            if identifier.startswith('AG'):
+            # Tentar encontrar o registro (Compromisso ou Transação)
+            appt = Appointment.objects.filter(user=user, identifier=identifier).first()
+            if appt:
                 # EDITAR COMPROMISSO
-                appt = Appointment.objects.filter(user=user, identifier=identifier).first()
                 if not appt: return f"❌ Compromisso ID `{identifier}` não encontrado."
 
                 changed = False
@@ -385,9 +385,9 @@ class AIAgentService:
     def _handle_delete(self, text, user):
         try:
             if not self.llm:
-                # Fallback para regex
-                match = re.search(r'\b([A-Z0-9]{4})\b', text.upper())
-                if not match: return "Informe o ID de 4 caracteres."
+                # Fallback para regex (3 caracteres alfanuméricos)
+                match = re.search(r'\b([A-Z0-9]{3})\b', text.upper())
+                if not match: return "Informe o ID de 3 caracteres."
                 identifier = match.group(1)
             else:
                 parser = JsonOutputParser()
@@ -401,12 +401,12 @@ class AIAgentService:
                 identifier = data.get('identifier', '').upper()
 
             if not identifier:
-                return "Não consegui identificar o ID na sua mensagem. Por favor, envie o ID de 4 caracteres (Ex: 6N5G ou AG3D)."
+                return "Não consegui identificar o ID na sua mensagem. Por favor, envie o ID de 3 caracteres (Ex: X12 ou A1B)."
 
-            if identifier.startswith('AG'):
+            # Tentar encontrar como compromisso
+            appt = Appointment.objects.filter(user=user, identifier=identifier).first()
+            if appt:
                 # EXCLUIR COMPROMISSO
-                appt = Appointment.objects.filter(user=user, identifier=identifier).first()
-                if not appt: return f"ID *{identifier}* não encontrado na sua agenda."
                 title = appt.title
                 appt.delete()
                 return f"🗑️ **COMPROMISSO REMOVIDO!**\n\n✅ O evento `{identifier}` (*{title}*) foi excluído da sua agenda."

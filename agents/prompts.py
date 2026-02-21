@@ -7,9 +7,9 @@ Analise a mensagem do usuário delimitada por três aspas abaixo e retorne APENA
 Palavras-chave possíveis:
 - TRANSACTION: Registro de NOVO gasto ou receita. (Ex: "gastei 50", "recebi pix de 100")
 - SCHEDULE: Agendamento de NOVO compromisso ou lembrete. (Ex: "anota uma reunião", "me lembra de tomar remédio amanhã")
-- EDIT: Alteração ou correção de algo que já existe no sistema. Geralmente menciona um ID ou pede para "mudar", "alterar", "corrigir". (Ex: "muda o horário do agendamento AG12", "altera o valor da transação A1B2", "corrige a data do ID X9Z2")
+- EDIT: Alteração ou correção de algo que já existe no sistema. Geralmente menciona um ID ou pede para "mudar", "alterar", "corrigir". (Ex: "muda o horário do agendamento X12", "altera o valor da transação A1B", "corrige a data do ID X9Z")
 - REPORT: Consultas, saldos e resumos. (Ex: "quanto gastei?", "meu saldo", "relatório de janeiro")
-- DELETE: Exclusão de registros. (Ex: "apaga o gasto A1B2", "deleta o compromisso AG12")
+- DELETE: Exclusão de registros. (Ex: "apaga o gasto A1B", "deleta o compromisso X12")
 - OTHER: Conversas gerais, "oi", "obrigado".
 
 Mensagem do usuário:
@@ -92,7 +92,7 @@ REGRAS DE EXTRAÇÃO (MUITO IMPORTANTE):
 2. **Data/Hora**: Se o usuário pedir para mudar apenas o HORÁRIO (Ex: "muda para 21:25"), retorne 'date' como null. 
 3. **Comparações**: Em frases como "de 21:30 para 21:25", ignore o horário antigo e capture apenas o NOVO. Não assuma que isso muda a data do compromisso para amanhã.
 4. **Fuso Horário**: Não tente ajustar datas baseado no horário atual. Se a data não foi mencionada, retorne 'date': null.
-5. **ID**: Capture exatamente o ID de 4 caracteres (Ex: "AGRL").
+5. **ID**: Capture exatamente o ID de 3 caracteres (Ex: "A1B").
 
 Retorne um JSON puro no formato abaixo:
 {{
@@ -227,7 +227,7 @@ Resposta (Limpa, Humana e Organizada):
 
 DELETE_PROMPT = """
 Extraia o identificador (ID) do registro que o usuário deseja excluir (Transação ou Compromisso).
-O ID possui exatamente 4 caracteres (Ex: A1B2, AG45).
+O ID possui exatamente 3 caracteres (Ex: A1B, 6N5).
 
 Mensagem:
 \"\"\"

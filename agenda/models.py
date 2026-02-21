@@ -5,9 +5,9 @@ import random
 import string
 
 def generate_agenda_identifier():
-    """Gera um identificador único para o agendamento (Ex: AG12)"""
+    """Gera um identificador único para o agendamento (Ex: A1B)"""
     chars = string.ascii_uppercase + string.digits
-    return 'AG' + ''.join(random.choices(chars, k=2))
+    return ''.join(random.choices(chars, k=3))
 
 class Appointment(models.Model):
     """Modelo para agenda eletrônica / compromissos"""

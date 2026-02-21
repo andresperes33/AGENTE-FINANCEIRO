@@ -6,9 +6,9 @@ import string
 
 
 def generate_identifier():
-    """Gera um identificador único para a transação (A1B2)"""
+    """Gera um identificador único para a transação (Ex: A1B)"""
     chars = string.ascii_uppercase + string.digits
-    return ''.join(random.choices(chars, k=4))
+    return ''.join(random.choices(chars, k=3))
 
 
 
