@@ -123,7 +123,7 @@ class AIAgentService:
             if "error" in data: return f"Não consegui ler o comprovante: {data['error']}"
 
             amount = float(str(data.get('amount', 0)).replace(',', '.'))
-            tx = Transaction.objects.create(user=user, description=data.get('description', 'Comprovante'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.now().date())
+            tx = Transaction.objects.create(user=user, description=data.get('description', 'Comprovante'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.localtime().date())
             
             response = f"✨ *LANÇAMENTO VIA FOTO CONCLUÍDO!* ✨\n\n"
             response += f"🆔 **Identificador:** `{tx.identifier}`\n"
@@ -271,7 +271,7 @@ class AIAgentService:
             chain = prompt | self.llm | parser
             data = chain.invoke({"text": text})
             amount = float(str(data.get('amount', 0)).replace(',', '.'))
-            tx = Transaction.objects.create(user=user, description=data.get('description', 'Transação'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.now().date())
+            tx = Transaction.objects.create(user=user, description=data.get('description', 'Transação'), amount=amount, type=data.get('type', 'expense'), category=data.get('category', 'Outros'), transaction_date=timezone.localtime().date())
             
             response = f"✅ **LANÇAMENTO REGISTRADO!**\n\n"
             response += f"🆔 **ID:** `{tx.identifier}`\n"
@@ -286,7 +286,7 @@ class AIAgentService:
 
     def _handle_edit(self, text, user):
         try:
-            today = timezone.now().date().strftime('%Y-%m-%d')
+            today = timezone.localtime().date().strftime('%Y-%m-%d')
             parser = JsonOutputParser()
             prompt = PromptTemplate(
                 template=EDIT_PROMPT, 
@@ -422,7 +422,7 @@ class AIAgentService:
             return f"Erro ao excluir: {str(e)}"
 
     def _handle_report(self, text, user):
-        today = timezone.now().date()
+        today = timezone.localtime().date()
         
         # 1. Tentar extrair parâmetros da pergunta (Data e Categoria)
         params = {"start_date": None, "end_date": None, "category": None, "is_detailed": False}

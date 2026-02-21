@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import datetime
+from django.utils import timezone
 
 def generate_transactions_excel(transactions):
     """
@@ -70,7 +71,7 @@ def generate_transactions_pdf(user, transactions, summary_data):
     elements.append(Paragraph("Relatório Financeiro Profissional", title_style))
     elements.append(Paragraph(f"Usuário: {user.nome or user.email}", styles["Normal"]))
     elements.append(Paragraph(f"Período: {summary_data.get('date_range', 'Geral')}", styles["Normal"]))
-    elements.append(Paragraph(f"Data de Geração: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles["Normal"]))
+    elements.append(Paragraph(f"Data de Geração: {timezone.localtime().strftime('%d/%m/%Y %H:%M')}", styles["Normal"]))
     elements.append(Spacer(1, 0.2 * inch))
 
     # 2. Resumo Financeiro

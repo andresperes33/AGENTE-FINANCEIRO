@@ -38,7 +38,7 @@ def appointment_create(request):
             messages.error(request, f'Erro ao agendar: {e}')
             
     return render(request, 'agenda/form.html', {
-        'today_iso': timezone.now().date().isoformat()
+        'today_iso': timezone.localtime().date().isoformat()
     })
 
 @login_required
@@ -80,7 +80,7 @@ def appointment_edit(request, pk):
         'appointment': appt,
         'date_iso': date_iso,
         'time_iso': time_iso,
-        'today_iso': timezone.now().date().isoformat()
+        'today_iso': timezone.localtime().date().isoformat()
     })
 
 @login_required

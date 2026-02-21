@@ -15,7 +15,7 @@ from .utils import generate_transactions_excel, generate_transactions_pdf
 def home(request):
     """Dashboard home com resumo financeiro"""
     user = request.user
-    today = timezone.now().date()
+    today = timezone.localtime().date()
     
     # Transações do mês atual
     transactions_month = Transaction.objects.filter(
@@ -136,7 +136,7 @@ def transaction_create(request):
                 category=category,
                 amount=float(amount_raw),
                 type=type_tx,
-                transaction_date=transaction_date or timezone.now().date()
+                transaction_date=transaction_date or timezone.localtime().date()
             )
             messages.success(request, 'Transação criada com sucesso!')
             return redirect('dashboard:transactions_list')
@@ -148,7 +148,7 @@ def transaction_create(request):
     categories = sorted(list(set(c.strip() for c in user_categories if c)))
 
     context = {
-        'today_iso': timezone.now().date().isoformat(),
+        'today_iso': timezone.localtime().date().isoformat(),
         'user_categories': categories,
     }
     return render(request, 'dashboard/transaction_form.html', context)
@@ -200,7 +200,7 @@ def transaction_edit(request, pk):
     
     context = {
         'transaction': transaction,
-        'today_iso': timezone.now().date().isoformat(),
+        'today_iso': timezone.localtime().date().isoformat(),
     }
     return render(request, 'dashboard/transaction_form.html', context)
 
@@ -229,7 +229,7 @@ def reports(request):
     period = request.GET.get('period', '30')  # dias
     days = int(period)
     
-    start_date = timezone.now().date() - timedelta(days=days)
+    start_date = timezone.localtime().date() - timedelta(days=days)
     
     transactions = Transaction.objects.filter(
         user=user,
@@ -325,7 +325,7 @@ def export_excel(request):
     
     output = generate_transactions_excel(transactions)
     
-    filename = f"transacoes_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    filename = f"transacoes_{timezone.localtime().strftime('%Y%m%d_%H%M')}.xlsx"
     response = HttpResponse(
         output,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -363,7 +363,7 @@ def export_pdf(request):
     else:
         # Se não houver data, usa o período padrão de dias
         days = int(period)
-        start_date = timezone.now().date() - timedelta(days=days)
+        start_date = timezone.localtime().date() - timedelta(days=days)
         transactions = transactions.filter(transaction_date__gte=start_date)
     
     transactions = transactions.order_by('-transaction_date')
@@ -387,7 +387,7 @@ def export_pdf(request):
     
     output = generate_transactions_pdf(user, transactions, summary_data)
     
-    filename = f"relatorio_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    filename = f"relatorio_{timezone.localtime().strftime('%Y%m%d_%H%M')}.pdf"
     response = HttpResponse(output, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename={filename}'
     
